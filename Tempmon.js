@@ -50,6 +50,17 @@ var server = http.createServer(
 		}
 		else if ( page==='/')
 		{
+			fs.readFile('Tempmon.html', 'utf8', 
+			function (err,data) 
+			{
+		  		if (err) {
+		    		return console.error(err);
+		  		}
+		  		res.end(data);
+			});
+		}
+		else if ( page==='/testurl')
+		{
 			res.writeHead(200, {"Content-Type:": "text/html"});
 
 			var q = url.parse(req.url).query;
