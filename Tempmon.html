@@ -62,6 +62,36 @@
 				});
 			return promise;
 		}
+		
+		function createUint8ArrayFromMessageString( messageString )
+		{
+			// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
+			var messageLengthInBytes = 12;
+			var buffer = new ArrayBuffer(messageLengthInBytes);
+			var uint8Array = new Uint8Array( buffer );
+			for ( var i=0; i<messageLengthInBytes; i++ )
+			{
+				var byteAsHex = messageString.substr( i*2, 2 );
+				var byte = parseInt( byteAsHex, 16 );
+				uint8Array[i] = byte;
+			}
+			return uint8Array;
+		}
+
+		function getWeatherDataFromUint8Array( uint8Array )
+		{
+			var dataView = new DataView(uint8Array.buffer);
+			var weatherData = {
+				pressure: dataView.getUint32(0),		
+				temperature: dataView.getFloat32(4),
+				humidity: dataView.getUint32(8)
+			}
+			return weatherData;
+		}
+
+		var m = "000003f141c4fcc100000033";
+		var b = createUint8ArrayFromMessageString(m);
+		var data = getWeatherDataFromUint8Array(b);
 
 		var canvas = document.getElementById('theCanvas');
 		var ctx = canvas.getContext("2d");
@@ -83,10 +113,10 @@
 						var message = messages.data[i];
 						var numSecondsSinceEpoch = message.time;
 						var date = new Date( numSecondsSinceEpoch * 1000 );
-						div.innerHTML += "<div>" + date.toString() + ": " + message.data + "</div>";
-					}
+						var weatherData = getWeatherDataFromUint8Array( createUint8ArrayFromMessageString( message.data ) );
 
-					
+						div.innerHTML += "<div>" + date.toString() + ": " + JSON.stringify(weatherData) + "</div>";
+					}
 				})
 			.catch(
 				function( error )
