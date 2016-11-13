@@ -4,16 +4,166 @@
 	</head>
 	
 	<body>
-		<div style="position:absolute; top:5px; left:5px; bottom:5px; right:5px; display:flex; flex-direction:column;">
-			<canvas id="theCanvas" style="flex:1 1 200px; border:1px solid #000000;" tabindex="0">
+		<div style="position:absolute; top:15px; left:15px; bottom:15px; right:15px; display:flex; flex-direction:column;">
+			<canvas id="theCanvas" style="flex:1 1 auto; border:1px solid #000000;" tabindex="0">
 				Your browser does not support the HTML5 canvas tag.
 			</canvas>
-
-			<div id="theDiv">...</div>
 		</div>
 	</body>
 	
 	<script>
+		function ChartDataPresenter( canvas, chartData, chartDataWindow ) 
+		{	
+			this._canvas = canvas;
+			this._chartData = chartData;
+			this._chartDataWindow = chartDataWindow;
+
+
+			this._canvas.addEventListener( 'keydown', 
+				function( event )
+				{
+					if ( event.keyCode===37 )				// left arrow
+					{
+						this._chartDataWindow.x -= 0.5;
+					}
+					else if ( event.keyCode===39 )			// right arrow
+					{
+						this._chartDataWindow.x += 0.5;
+					}
+					else if ( event.keyCode===38 )			// up arrow
+					{
+						this._chartDataWindow.y += 0.5;
+					}
+					else if ( event.keyCode===40 )			// down arrow
+					{
+						this._chartDataWindow.y -= 0.5;
+					}
+					else if ( event.keyCode===40 )			// down arrow
+					{
+						this._chartDataWindow.y -= 0.5;
+					}
+					else if ( event.keyCode===187 )			// +/=
+					{
+						this._chartDataWindow.width *= 1.1;
+						this._chartDataWindow.height *= 1.1;
+					}
+					else if ( event.keyCode===189 )			// -/_
+					{
+						this._chartDataWindow.width *= 0.9;
+						this._chartDataWindow.height *= 0.9;
+					}
+					this.update();
+				}.bind(this));
+		}
+
+		ChartDataPresenter.prototype.update = function()
+		{
+			this._canvas.width = this._canvas.clientWidth;
+			this._canvas.height = this._canvas.clientHeight;
+
+			var canvasWidth = this._canvas.width;
+			var canvasHeight = this._canvas.height;
+			var context = this._canvas.getContext("2d");
+			context.strokeStyle="#999999";
+
+			var originwp = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:0}, this._chartDataWindow );
+			var origincp = ChartDataPresenter.chartWindowPointToCanvasPoint( originwp, this._canvas );
+			if ( originwp.y>=0 && originwp.y<=1 )
+			{
+				context.beginPath();	
+				context.lineTo( 0, origincp.y );			
+				context.lineTo( canvasWidth, origincp.y );	
+				context.stroke();
+			}
+			if ( originwp.x>=0 && originwp.x<=1 )
+			{
+				context.beginPath();	
+				context.lineTo( origincp.x, 0 );			
+				context.lineTo( origincp.x, canvasHeight );	
+				context.stroke();
+			}
+			
+			context.beginPath();
+			for ( var i=0; i<this._chartData.length; i++ )
+			{
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( this._chartData[i], this._chartDataWindow );
+				if ( ChartDataPresenter.isInUnitSquare(windowPoint) )
+				{
+					var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+					context.lineTo(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
+				}
+			}
+			context.stroke();
+
+			context.fillStyle="#222222";
+			for ( var i=0; i<this._chartData.length; i++ )
+			{
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( this._chartData[i], this._chartDataWindow );
+				if ( ChartDataPresenter.isInUnitSquare(windowPoint) )
+				{
+					var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+					context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
+				}
+			}
+		};
+
+		ChartDataPresenter.chartDataPointToChartWindowPoint = function( chartDataPoint, chartDataWindow )
+		{
+			var x2 = (chartDataPoint.x - chartDataWindow.x) / chartDataWindow.width;
+			var y2 = (chartDataPoint.y - chartDataWindow.y) / chartDataWindow.height;
+			return {x:x2, y:y2};
+		};
+
+		ChartDataPresenter.isInUnitSquare = function( point )
+		{
+			if ( point.x<0 || point.y<0 || point.x>=1 || point.y>=1 )
+				return false;
+			return true;
+		};
+
+		ChartDataPresenter.chartWindowPointToCanvasPoint = function( chartWindowPoint, canvas )
+		{
+			var x2 = chartWindowPoint.x * canvas.width;
+			var y2 = (1-chartWindowPoint.y) * canvas.height;
+			return {x:x2, y:y2};
+		};
+
+		/*ChartDataPresenter.chartDataPointToCanvasPoint = function( chartDataPoint, chartDataWindow, canvas )
+		{
+			var pt = ChartDataPresenter.chartDataPointToChartWindowPoint( chartDataPoint, chartDataWindow );
+			if ( pt===null )
+				return null;
+			pt = ChartDataPresenter.chartWindowPointToCanvasPoint( pt, canvas );
+			return pt;
+		};*/
+
+		function main2()
+		{
+			var canvas = document.getElementById('theCanvas');
+			
+			var chartData = [
+				{x:0, y:1.6},
+				{x:0, y:1.6},
+				{x:1, y:2},
+				{x:2, y:3},
+				{x:3, y:2},
+				{x:4, y:2},
+				{x:5, y:1}
+			];
+
+			chartDataWindow = {
+				x: -2,		// the (x,y) origin corresponds to the lower-left corner of the data window
+				y: -2,
+				width: 10,
+				height: 10
+			};
+
+			var presenter = new ChartDataPresenter( canvas, chartData, chartDataWindow );
+			presenter.update();
+		}
+
+		main2();
+
 		function makeHttpRequestPromise( url, method, data, headers )
 		{
 			var promise = new Promise(
@@ -171,8 +321,8 @@
 					});
 		}
 
-		main();
-		
+		//main();
+
 	</script>
 	
 </html>
