@@ -4,14 +4,12 @@
 	</head>
 	
 	<body>
-		<div>
-			<div>
-				<canvas id="theCanvas" width="320" height="200" style="border:1px solid #000000;" tabindex="0">
-					Your browser does not support the HTML5 canvas tag.
-				</canvas>
+		<div style="position:absolute; top:5px; left:5px; bottom:5px; right:5px; display:flex; flex-direction:column;">
+			<canvas id="theCanvas" style="flex:1 1 200px; border:1px solid #000000;" tabindex="0">
+				Your browser does not support the HTML5 canvas tag.
+			</canvas>
 
-				<div id="theDiv">...</div>
-			</div>
+			<div id="theDiv">...</div>
 		</div>
 	</body>
 	
@@ -89,40 +87,92 @@
 			return weatherData;
 		}
 
-		var m = "000003f141c4fcc100000033";
-		var b = createUint8ArrayFromMessageString(m);
-		var data = getWeatherDataFromUint8Array(b);
+		function updateCanvas( messages )
+		{
+			var canvas = document.getElementById('theCanvas');
 
-		var canvas = document.getElementById('theCanvas');
-		var ctx = canvas.getContext("2d");
-		ctx.moveTo(0,0);
-		ctx.lineTo(200,100);
-		ctx.stroke();
+			var w = canvas.clientWidth;
+			var h = canvas.clientHeight;
 
-		var div = document.getElementById('theDiv');
-		div.innerHTML = 'toto';
+			canvas.width = w;
+			canvas.height = h;
+			
+			var sx = 10;
 
-		makeHttpRequestPromise( '/api/devices/1D80C/messages', 'GET')
-			.then(
-				function( response )
-				{
-					var messages = JSON.parse(response);
-					div.innerHTML = messages.data.length;
-					for ( var i=0; i<messages.data.length; ++i  )
+			var oy = 10;
+			var sy = 30;
+
+			var temperaturePoints = [];
+			for ( var i=0; i<messages.data.length; i++ )
+			{
+				var temperature = messages.data[i].weatherData.temperature;
+				var pt = {
+					x: w - (i * sx),
+					y: h - ( (temperature-oy) * sy)
+				};
+				temperaturePoints.push( pt );
+			}
+
+			var ctx = canvas.getContext("2d");
+			ctx.beginPath();
+			ctx.strokeStyle="#999999";
+			for ( var i=0; i<temperaturePoints.length; i++ )
+			{
+				var pt = temperaturePoints[i];
+				ctx.lineTo( pt.x, pt.y );
+				ctx.stroke();
+			}
+
+			//ctx.strokeStyle="#FF0000";
+			ctx.fillStyle="#222222";
+			for ( var i=0; i<temperaturePoints.length; i++ )
+			{
+				var pt = temperaturePoints[i];
+				ctx.fillRect(pt.x-2, pt.y-2, 4, 4);
+			}
+		}
+
+
+		function main()
+		{
+			var m = "000003f141c4fcc100000033";
+			var b = createUint8ArrayFromMessageString(m);
+			var data = getWeatherDataFromUint8Array(b);
+
+			var div = document.getElementById('theDiv');
+			div.innerHTML = 'toto';
+
+			makeHttpRequestPromise( '/api/devices/1D80C/messages', 'GET')
+				.then(
+					function( response )
 					{
-						var message = messages.data[i];
-						var numSecondsSinceEpoch = message.time;
-						var date = new Date( numSecondsSinceEpoch * 1000 );
-						var weatherData = getWeatherDataFromUint8Array( createUint8ArrayFromMessageString( message.data ) );
+						var messages = JSON.parse(response);
+						div.innerHTML = messages.data.length;
+						for ( var i=0; i<messages.data.length; ++i  )
+						{
+							var message = messages.data[i];
+							var numSecondsSinceEpoch = message.time;
+							var date = new Date( numSecondsSinceEpoch * 1000 );
+							var weatherData = getWeatherDataFromUint8Array( createUint8ArrayFromMessageString( message.data ) );
 
-						div.innerHTML += "<div>" + date.toString() + ": " + JSON.stringify(weatherData) + "</div>";
-					}
-				})
-			.catch(
-				function( error )
-				{
-					div.innerHTML = error.toString();
-				});
+							// Store decoded data directly in the response object
+							message.weatherData = weatherData;
+							message.date = date;
+
+							//div.innerHTML += "<div>" + date.toString() + ": " + JSON.stringify(weatherData) + "</div>";
+						}
+
+						updateCanvas( messages );
+					})
+				.catch(
+					function( error )
+					{
+						div.innerHTML = error.toString();
+					});
+		}
+
+		main();
+		
 	</script>
 	
 </html>
