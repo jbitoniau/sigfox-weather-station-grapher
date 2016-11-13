@@ -67,16 +67,17 @@
 			//context.lineWidth=1;
 			
 			// Lines
+			var textSize = 14; 
+			context.strokeStyle = "#CCCCCC";
+			context.font = textSize + "px sans-serif";
+			context.fillStyle="#CCCCCC";
 			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
 			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+			
 			var dy = c1.y - c0.y;
 			var yspacing = Math.pow( 10, Math.floor( Math.log10(dy) ) );   // in chart data unit
-
 			var y0 = Math.floor( c0.y / yspacing ) * yspacing;
 			var y1 = Math.floor( c1.y / yspacing ) * yspacing;
-			context.strokeStyle="#CCCCCC";
-			context.font="14px sans-serif";
-			context.fillStyle="#CCCCCC";
 			for ( var y=y0; y<=y1; y+=yspacing )
 			{
 				context.beginPath();
@@ -85,8 +86,24 @@
 				context.lineTo(0, canvasPoint.y);
 				context.lineTo(canvasWidth, canvasPoint.y);
 				context.stroke();
+				var text = y;
+				context.fillText(text, canvasWidth-context.measureText(text).width-5, canvasPoint.y-5);
+			}
 
-				context.fillText(y, canvasWidth/2, canvasPoint.y-4);
+			var dx = c1.x - c0.x;
+			var xspacing = Math.pow( 10, Math.floor( Math.log10(dx) ) );   // in chart data unit
+			var x0 = Math.floor( c0.x / xspacing ) * xspacing;
+			var x1 = Math.floor( c1.x / xspacing ) * xspacing;
+			for ( var x=x0; x<=x1; x+=xspacing )
+			{
+				context.beginPath();
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:x, y:0}, this._chartDataWindow );
+				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+				context.lineTo(canvasPoint.x, 0);
+				context.lineTo(canvasPoint.x, canvasHeight);
+				context.stroke();
+				var text = x;
+				context.fillText(text, canvasPoint.x+5, textSize+2);
 			}
 
 			// Axes
