@@ -4,8 +4,8 @@
 	</head>
 	
 	<body>
-		<div style="position:absolute; top:15px; left:15px; bottom:15px; right:15px; display:flex; flex-direction:column;">
-			<canvas id="theCanvas" style="flex:1 1 auto; border:1px solid #000000;" tabindex="0">
+		<div style="position:absolute; top:15px; left:15px; bottom:15px; right:15px;">
+			<canvas id="theCanvas" style="width:100%; height:100%; border:1px solid rgba(255, 0, 0, 0.3);" tabindex="0">
 				Your browser does not support the HTML5 canvas tag.
 			</canvas>
 		</div>
@@ -64,8 +64,33 @@
 			var canvasWidth = this._canvas.width;
 			var canvasHeight = this._canvas.height;
 			var context = this._canvas.getContext("2d");
-			context.strokeStyle="#999999";
+			//context.lineWidth=1;
+			
+			// Lines
+			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
+			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+			var dy = c1.y - c0.y;
+			var yspacing = Math.pow( 10, Math.floor( Math.log10(dy) ) );   // in chart data unit
 
+			var y0 = Math.floor( c0.y / yspacing ) * yspacing;
+			var y1 = Math.floor( c1.y / yspacing ) * yspacing;
+			context.strokeStyle="#CCCCCC";
+			context.font="14px sans-serif";
+			context.fillStyle="#CCCCCC";
+			for ( var y=y0; y<=y1; y+=yspacing )
+			{
+				context.beginPath();
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:y}, this._chartDataWindow );
+				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+				context.lineTo(0, canvasPoint.y);
+				context.lineTo(canvasWidth, canvasPoint.y);
+				context.stroke();
+
+				context.fillText(y, canvasWidth/2, canvasPoint.y-4);
+			}
+
+			// Axes
+			context.strokeStyle="#222222";
 			var originwp = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:0}, this._chartDataWindow );
 			var origincp = ChartDataPresenter.chartWindowPointToCanvasPoint( originwp, this._canvas );
 			if ( originwp.y>=0 && originwp.y<=1 )
@@ -83,26 +108,21 @@
 				context.stroke();
 			}
 			
+			// Data 
 			context.beginPath();
-			context.fillStyle="#666666";
+			context.strokeStyle="#666666";
+			context.fillStyle="#444444";
 			for ( var i=0; i<this._chartData.length; i++ )
 			{
 				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( this._chartData[i], this._chartDataWindow );
 				if ( ChartDataPresenter.isInUnitSquare(windowPoint) )
 				{
 					var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
-					context.lineTo(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
-					context.fillRect(canvasPoint.x-3, canvasPoint.y-3, 4, 4);
+					context.lineTo(canvasPoint.x, canvasPoint.y);
+					context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
 				}
 			}
 			context.stroke();
-		};
-
-		ChartDataPresenter.chartDataPointToChartWindowPoint = function( chartDataPoint, chartDataWindow )
-		{
-			var x2 = (chartDataPoint.x - chartDataWindow.x) / chartDataWindow.width;
-			var y2 = (chartDataPoint.y - chartDataWindow.y) / chartDataWindow.height;
-			return {x:x2, y:y2};
 		};
 
 		ChartDataPresenter.isInUnitSquare = function( point )
@@ -112,12 +132,40 @@
 			return true;
 		};
 
-		ChartDataPresenter.chartWindowPointToCanvasPoint = function( chartWindowPoint, canvas )
+		ChartDataPresenter.chartDataPointToChartWindowPoint = function( chartDataPoint, chartDataWindow )
+		{
+			var x2 = (chartDataPoint.x - chartDataWindow.x) / chartDataWindow.width;
+			var y2 = (chartDataPoint.y - chartDataWindow.y) / chartDataWindow.height;
+			return {x:x2, y:y2};
+		};
+
+		ChartDataPresenter.chartWindowPointToCanvasPoint = function( chartWindowPoint, canvas, roundToInteger )
 		{
 			var x2 = chartWindowPoint.x * canvas.width;
 			var y2 = (1-chartWindowPoint.y) * canvas.height;
+			if ( roundToInteger===undefined || roundToInteger )
+			{
+				x2 = Math.round(x2);
+				y2 = Math.round(y2);
+			}
 			return {x:x2, y:y2};
 		};
+
+
+		ChartDataPresenter.canvasPointToChartWindowPoint = function( canvasPoint, canvas )
+		{
+			var x2 = canvasPoint.x / canvas.width;
+			var y2 = (canvas.height-canvasPoint.y) / canvas.height;
+			return {x:x2, y:y2};
+		};
+
+		ChartDataPresenter.chartWindowPointToChartDataPoint = function( chartWindowPoint, chartDataWindow )
+		{
+			var x2 = (chartWindowPoint.x * chartDataWindow.width) + chartDataWindow.x;
+			var y2 = (chartWindowPoint.y * chartDataWindow.height) + chartDataWindow.y;
+			return {x:x2, y:y2};
+		};
+
 
 		/*function main2()
 		{
