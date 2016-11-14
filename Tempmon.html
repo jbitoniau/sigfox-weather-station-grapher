@@ -304,7 +304,7 @@
 
 						// Test displaying the data. We convert time in minutes and rebase it ot the first value (of the first page for now)
 						var chartData = [];
-						var t0 = messages.data[messages.data.length-1].time;
+						var t0 = messages.data[0].time;
 						for ( var i=0; i<messages.data.length; ++i  )
 						{
 							var message = messages.data[i];
