@@ -55,6 +55,53 @@
 					}
 					this.update();
 				}.bind(this));
+
+			var lastCanvasPoint = null;
+			this._canvas.addEventListener( 'mousedown', 
+				function( event )
+				{
+					//http://www.jacklmoore.com/notes/mouse-position/
+					var target = event.target || event.srcElement;
+					var rect = target.getBoundingClientRect();
+					var offsetX = event.clientX - rect.left;
+					var offsetY = event.clientY - rect.top;
+
+					lastCanvasPoint = {x:offsetX, y:offsetY};
+
+				}.bind(this));
+			this._canvas.addEventListener( 'mousemove', 
+				function( event )
+				{
+					if ( !lastCanvasPoint )
+						return;
+
+					var target = event.target || event.srcElement;
+					var rect = target.getBoundingClientRect();
+					var offsetX = event.clientX - rect.left;
+					var offsetY = event.clientY - rect.top;
+
+					var canvasPoint = {x:offsetX, y:offsetY};
+					var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
+					chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
+					chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+
+					var lastChartDataPoint = {x:lastCanvasPoint.x, y:lastCanvasPoint.y};
+					lastChartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( lastChartDataPoint, this._canvas );
+					lastChartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( lastChartDataPoint, this._chartDataWindow );
+
+					var deltaX = chartDataPoint.x - lastChartDataPoint.x;
+					var deltaY = chartDataPoint.y - lastChartDataPoint.y;
+					this._chartDataWindow.x -= deltaX;
+					this._chartDataWindow.y -= deltaY;
+
+					lastCanvasPoint = canvasPoint;
+					this.update();
+				}.bind(this));
+			this._canvas.addEventListener( 'mouseup', 
+				function( event )
+				{
+					lastCanvasPoint = null;
+				}.bind(this));
 		}
 
 		ChartDataPresenter.prototype.update = function()
