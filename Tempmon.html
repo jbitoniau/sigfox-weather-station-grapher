@@ -43,10 +43,31 @@
 					{
 						this._chartDataWindow.y -= dy;
 					}
-					else if ( event.keyCode===187 )			// +/=
+					else if ( event.keyCode===187 ||		// +/=
+							  event.keyCode===189 )			// -/_
 					{
-						this._chartDataWindow.width *= 0.9;
-						this._chartDataWindow.height *= 0.9;
+						var zoomFactor = 1;
+						var k = 0.1;
+						if ( event.keyCode===187 )
+						{	
+							zoomFactor -= k;
+						}
+						else if ( event.keyCode===189 )
+						{
+							zoomFactor += k;
+						}
+
+						var chartDataPoint = {x:0.5, y:0.5};
+						chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+
+						this._chartDataWindow.width *= zoomFactor;
+						this._chartDataWindow.height *= zoomFactor;
+
+						var chartDataPoint2 = {x:0.5, y:0.5};
+						chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
+
+						this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
+						this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
 					}
 					else if ( event.keyCode===189 )			// -/_
 					{
