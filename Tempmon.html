@@ -96,11 +96,29 @@
 
 					lastCanvasPoint = canvasPoint;
 					this.update();
+
 				}.bind(this));
 			this._canvas.addEventListener( 'mouseup', 
 				function( event )
 				{
 					lastCanvasPoint = null;
+				}.bind(this));
+
+
+			this._canvas.addEventListener( 'wheel', 
+				function( event )
+				{
+					var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
+					var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+					var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
+					var dx = event.deltaX * (c1.x - c0.x) * s;
+					var dy = event.deltaY * (c1.y - c0.y) * s;
+					this._chartDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
+					this._chartDataWindow.y -= dy;
+
+					this.update();
+
+					event.preventDefault();
 				}.bind(this));
 		}
 
