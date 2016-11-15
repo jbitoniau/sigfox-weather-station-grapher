@@ -108,16 +108,61 @@
 			this._canvas.addEventListener( 'wheel', 
 				function( event )
 				{
-					var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
-					var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
-					var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
-					var dx = event.deltaX * (c1.x - c0.x) * s;
-					var dy = event.deltaY * (c1.y - c0.y) * s;
-					this._chartDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
-					this._chartDataWindow.y -= dy;
+					if ( event.ctrlKey )
+					{
+						var target = event.target || event.srcElement;
+						var rect = target.getBoundingClientRect();
+						var offsetX = event.clientX - rect.left;
+						var offsetY = event.clientY - rect.top;
+ 	
+						var wheelDelta = 0;
+						if ( Math.abs(event.deltaX)>Math.abs(event.deltaY) )
+						{
+							wheelDelta = event.deltaX;
+						}
+						else
+						{
+							wheelDelta = event.deltaY;
+						}
 
+						var canvasPoint = {x:offsetX, y:offsetY};
+						var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
+						chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
+						chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+console.log(wheelDelta);
+						var zoomFactor = 1.0;
+						var k = 0.001
+						if ( wheelDelta<0 )
+						{	
+							zoomFactor += k;
+						}
+						else
+						{
+							zoomFactor -= k;
+						}
+						for ( var i=0; i<Math.abs(wheelDelta); ++i )
+						{
+							this._chartDataWindow.width *= zoomFactor;
+							this._chartDataWindow.height *= zoomFactor;
+						}
+
+						var chartDataPoint2 = {x:canvasPoint.x, y:canvasPoint.y};
+						chartDataPoint2 = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint2, this._canvas );
+						chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
+						this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
+						this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
+					}
+					else
+					{
+						var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
+						var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+						var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
+						var dx = event.deltaX * (c1.x - c0.x) * s;
+						var dy = event.deltaY * (c1.y - c0.y) * s;
+						this._chartDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
+						this._chartDataWindow.y -= dy;
+					}
 					this.update();
-
 					event.preventDefault();
 				}.bind(this));
 		}
