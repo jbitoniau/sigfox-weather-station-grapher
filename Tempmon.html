@@ -12,199 +12,31 @@
 	</body>
 	
 	<script>
-		function ChartDataPresenter( canvas, chartData, chartDataWindow ) 
+		'use strict';
+
+		/*
+			ChartDataPresenter
+		*/
+		function ChartDataPresenter() 
 		{	
-			this._canvas = canvas;
-			this._chartData = chartData;
-			this._chartDataWindow = chartDataWindow;
-
-			this._canvas.addEventListener( 'keydown', 
-				function( event )
-				{
-					var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
-					var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
-					var s = 0.1;
-					var dx = (c1.x - c0.x) * s;
-					var dy = (c1.y - c0.y) * s;
-
-					if ( event.keyCode===37 )				// left arrow
-					{
-						this._chartDataWindow.x -= dx;
-					}
-					else if ( event.keyCode===39 )			// right arrow
-					{
-						this._chartDataWindow.x += dx;
-					}
-					else if ( event.keyCode===38 )			// up arrow
-					{
-						this._chartDataWindow.y += dy;
-					}
-					else if ( event.keyCode===40 )			// down arrow
-					{
-						this._chartDataWindow.y -= dy;
-					}
-					else if ( event.keyCode===187 ||		// +/=
-							  event.keyCode===189 )			// -/_
-					{
-						var zoomFactor = 1;
-						var k = 0.1;
-						if ( event.keyCode===187 )
-						{	
-							zoomFactor -= k;
-						}
-						else if ( event.keyCode===189 )
-						{
-							zoomFactor += k;
-						}
-
-						var chartDataPoint = {x:0.5, y:0.5};
-						chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
-
-						this._chartDataWindow.width *= zoomFactor;
-						this._chartDataWindow.height *= zoomFactor;
-
-						var chartDataPoint2 = {x:0.5, y:0.5};
-						chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
-
-						this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
-						this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
-					}
-					else if ( event.keyCode===189 )			// -/_
-					{
-						this._chartDataWindow.width *= 1.1;
-						this._chartDataWindow.height *= 1.1;
-					}
-					this.update();
-				}.bind(this));
-
-			var lastCanvasPoint = null;
-			this._canvas.addEventListener( 'mousedown', 
-				function( event )
-				{
-					//http://www.jacklmoore.com/notes/mouse-position/
-					var target = event.target || event.srcElement;
-					var rect = target.getBoundingClientRect();
-					var offsetX = event.clientX - rect.left;
-					var offsetY = event.clientY - rect.top;
-
-					lastCanvasPoint = {x:offsetX, y:offsetY};
-
-				}.bind(this));
-			this._canvas.addEventListener( 'mousemove', 
-				function( event )
-				{
-					if ( !lastCanvasPoint )
-						return;
-
-					var target = event.target || event.srcElement;
-					var rect = target.getBoundingClientRect();
-					var offsetX = event.clientX - rect.left;
-					var offsetY = event.clientY - rect.top;
-
-					var canvasPoint = {x:offsetX, y:offsetY};
-					var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
-					chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
-					chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
-
-					var lastChartDataPoint = {x:lastCanvasPoint.x, y:lastCanvasPoint.y};
-					lastChartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( lastChartDataPoint, this._canvas );
-					lastChartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( lastChartDataPoint, this._chartDataWindow );
-
-					var deltaX = chartDataPoint.x - lastChartDataPoint.x;
-					var deltaY = chartDataPoint.y - lastChartDataPoint.y;
-					this._chartDataWindow.x -= deltaX;
-					this._chartDataWindow.y -= deltaY;
-
-					lastCanvasPoint = canvasPoint;
-					this.update();
-
-				}.bind(this));
-			this._canvas.addEventListener( 'mouseup', 
-				function( event )
-				{
-					lastCanvasPoint = null;
-				}.bind(this));
-
-
-			this._canvas.addEventListener( 'wheel', 
-				function( event )
-				{
-					if ( event.ctrlKey )
-					{
-						var target = event.target || event.srcElement;
-						var rect = target.getBoundingClientRect();
-						var offsetX = event.clientX - rect.left;
-						var offsetY = event.clientY - rect.top;
- 	
-						var wheelDelta = 0;
-						if ( Math.abs(event.deltaX)>Math.abs(event.deltaY) )
-						{
-							wheelDelta = event.deltaX;
-						}
-						else
-						{
-							wheelDelta = event.deltaY;
-						}
-
-						var canvasPoint = {x:offsetX, y:offsetY};
-						var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
-						chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
-						chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
-console.log(wheelDelta);
-						var zoomFactor = 1.0;
-						var k = 0.001
-						if ( wheelDelta<0 )
-						{	
-							zoomFactor += k;
-						}
-						else
-						{
-							zoomFactor -= k;
-						}
-						for ( var i=0; i<Math.abs(wheelDelta); ++i )
-						{
-							this._chartDataWindow.width *= zoomFactor;
-							this._chartDataWindow.height *= zoomFactor;
-						}
-
-						var chartDataPoint2 = {x:canvasPoint.x, y:canvasPoint.y};
-						chartDataPoint2 = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint2, this._canvas );
-						chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
-						this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
-						this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
-					}
-					else
-					{
-						var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
-						var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
-						var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
-						var dx = event.deltaX * (c1.x - c0.x) * s;
-						var dy = event.deltaY * (c1.y - c0.y) * s;
-						this._chartDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
-						this._chartDataWindow.y -= dy;
-					}
-					this.update();
-					event.preventDefault();
-				}.bind(this));
 		}
 
-		ChartDataPresenter.prototype.update = function()
+		ChartDataPresenter.update = function( canvas, chartData, chartDataWindow )
 		{
-			this._canvas.width = this._canvas.clientWidth;
-			this._canvas.height = this._canvas.clientHeight;
+			canvas.width = canvas.clientWidth;
+			canvas.height = canvas.clientHeight;
 
-			var canvasWidth = this._canvas.width;
-			var canvasHeight = this._canvas.height;
-			var context = this._canvas.getContext("2d");
-			//context.lineWidth=1;
+			var canvasWidth = canvas.width;
+			var canvasHeight = canvas.height;
+			var context = canvas.getContext("2d");
 			
-			// Lines
+			// Grid lines
 			var textSize = 14; 
 			context.strokeStyle = "#CCCCCC";
 			context.font = textSize + "px sans-serif";
 			context.fillStyle="#CCCCCC";
-			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
-			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, chartDataWindow );
+			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, chartDataWindow );
 			
 			var dy = c1.y - c0.y;
 			var yspacing = Math.pow( 10, Math.floor( Math.log10(dy) ) );   // in chart data unit
@@ -213,8 +45,8 @@ console.log(wheelDelta);
 			for ( var y=y0; y<=y1; y+=yspacing )
 			{
 				context.beginPath();
-				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:y}, this._chartDataWindow );
-				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:y}, chartDataWindow );
+				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, canvas );
 				context.lineTo(0, canvasPoint.y);
 				context.lineTo(canvasWidth, canvasPoint.y);
 				context.stroke();
@@ -229,8 +61,8 @@ console.log(wheelDelta);
 			for ( var x=x0; x<=x1; x+=xspacing )
 			{
 				context.beginPath();
-				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:x, y:0}, this._chartDataWindow );
-				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:x, y:0}, chartDataWindow );
+				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, canvas );
 				context.lineTo(canvasPoint.x, 0);
 				context.lineTo(canvasPoint.x, canvasHeight);
 				context.stroke();
@@ -240,8 +72,8 @@ console.log(wheelDelta);
 
 			// Axes
 			context.strokeStyle="#222222";
-			var originwp = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:0}, this._chartDataWindow );
-			var origincp = ChartDataPresenter.chartWindowPointToCanvasPoint( originwp, this._canvas );
+			var originwp = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:0}, chartDataWindow );
+			var origincp = ChartDataPresenter.chartWindowPointToCanvasPoint( originwp, canvas );
 			if ( originwp.y>=0 && originwp.y<=1 )
 			{
 				context.beginPath();	
@@ -261,12 +93,12 @@ console.log(wheelDelta);
 			context.beginPath();
 			context.strokeStyle="#666666";
 			context.fillStyle="#444444";
-			for ( var i=0; i<this._chartData.length; i++ )
+			for ( var i=0; i<chartData.length; i++ )
 			{
-				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( this._chartData[i], this._chartDataWindow );
+				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( chartData[i], chartDataWindow );
 				if ( ChartDataPresenter.isInUnitSquare(windowPoint) )
 				{
-					var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, this._canvas );
+					var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, canvas );
 					context.lineTo(canvasPoint.x, canvasPoint.y);
 					context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
 				}
@@ -300,7 +132,6 @@ console.log(wheelDelta);
 			return {x:x2, y:y2};
 		};
 
-
 		ChartDataPresenter.canvasPointToChartWindowPoint = function( canvasPoint, canvas )
 		{
 			var x2 = canvasPoint.x / canvas.width;
@@ -315,34 +146,218 @@ console.log(wheelDelta);
 			return {x:x2, y:y2};
 		};
 
+		/*
+			ChartDataController
+		*/
+		function ChartDataController( canvas, chartData, chartDataWindow ) 
+		{	
+			this._canvas = canvas;
+			this._chartData = chartData;
+			this._chartDataWindow = chartDataWindow;
 
-		/*function main2()
-		{
-			var canvas = document.getElementById('theCanvas');
+			this._onKeyDownHandler = this._onKeyDown.bind(this);
+			this._onMouseDownHandler = this._onMouseDown.bind(this);
+			this._onMouseMoveHandler = this._onMouseMove.bind(this);
+			this._onMouseUpHandler = this._onMouseUp.bind(this);
+			this._onWheelHandler = this._onWheel.bind(this);
+
+			this._canvas.addEventListener( 'keydown', this._onKeyDownHandler );
+			this._canvas.addEventListener( 'mousedown', this._onMouseDownHandler );
+			this._canvas.addEventListener( 'mousemove', this._onMouseMoveHandler );
+			this._canvas.addEventListener( 'mouseup', this._onMouseUpHandler );
+			this._canvas.addEventListener( 'wheel', this._onWheelHandler );
 			
-			var chartData = [
-				{x:0, y:1.6},
-				{x:0, y:1.6},
-				{x:1, y:2},
-				{x:2, y:3},
-				{x:3, y:2},
-				{x:4, y:2},
-				{x:5, y:1}
-			];
-
-			chartDataWindow = {
-				x: -2,		// the (x,y) origin corresponds to the lower-left corner of the data window
-				y: -2,
-				width: 10,
-				height: 10
-			};
-
-			var presenter = new ChartDataPresenter( canvas, chartData, chartDataWindow );
-			presenter.update();
+			this._lastCanvasPoint = null;
 		}
-		main2();*/
+		
+		ChartDataController.prototype.dispose = function()
+		{
+			this._canvas.removeEventListener( 'keydown', this._onKeyDownHandler );
+			this._canvas.removeEventListener( 'mousedown', this._onMouseDownHandler );
+			this._canvas.removeEventListener( 'mousemove', this._onMouseMoveHandler );
+			this._canvas.removeEventListener( 'mouseup', this._onMouseUpHandler );
+			this._canvas.removeEventListener( 'wheel', this._onWheelHandler );
+		};
 
-		function makeHttpRequestPromise( url, method, data, headers )
+		ChartDataController.prototype.update = function()
+		{
+			ChartDataPresenter.update( this._canvas, this._chartData, this._chartDataWindow );
+		};
+
+		ChartDataController.prototype._onKeyDown = function( event )
+		{
+			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
+			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+			var s = 0.1;
+			var dx = (c1.x - c0.x) * s;
+			var dy = (c1.y - c0.y) * s;
+
+			if ( event.keyCode===37 )				// left arrow
+			{
+				this._chartDataWindow.x -= dx;
+			}
+			else if ( event.keyCode===39 )			// right arrow
+			{
+				this._chartDataWindow.x += dx;
+			}
+			else if ( event.keyCode===38 )			// up arrow
+			{
+				this._chartDataWindow.y += dy;
+			}
+			else if ( event.keyCode===40 )			// down arrow
+			{
+				this._chartDataWindow.y -= dy;
+			}
+			else if ( event.keyCode===187 ||		// +/=
+					  event.keyCode===189 )			// -/_
+			{
+				var zoomFactor = 1;
+				var k = 0.1;
+				if ( event.keyCode===187 )
+				{	
+					zoomFactor -= k;
+				}
+				else if ( event.keyCode===189 )
+				{
+					zoomFactor += k;
+				}
+
+				var chartDataPoint = {x:0.5, y:0.5};
+				chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+
+				this._chartDataWindow.width *= zoomFactor;
+				this._chartDataWindow.height *= zoomFactor;
+
+				var chartDataPoint2 = {x:0.5, y:0.5};
+				chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
+
+				this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
+				this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
+			}
+			else if ( event.keyCode===189 )			// -/_
+			{
+				this._chartDataWindow.width *= 1.1;
+				this._chartDataWindow.height *= 1.1;
+			}
+
+			this.update();
+		};
+
+		ChartDataController.prototype._onMouseDown = function( event )
+		{
+			// http://www.jacklmoore.com/notes/mouse-position/
+			var target = event.target || event.srcElement;
+			var rect = target.getBoundingClientRect();
+			var offsetX = event.clientX - rect.left;
+			var offsetY = event.clientY - rect.top;
+
+			this._lastCanvasPoint = {x:offsetX, y:offsetY};
+		};
+
+		ChartDataController.prototype._onMouseMove = function( event )
+		{
+			if ( !this._lastCanvasPoint )
+				return;
+
+			var target = event.target || event.srcElement;
+			var rect = target.getBoundingClientRect();
+			var offsetX = event.clientX - rect.left;
+			var offsetY = event.clientY - rect.top;
+
+			var canvasPoint = {x:offsetX, y:offsetY};
+			var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
+			chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
+			chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+
+			var lastChartDataPoint = {x:this._lastCanvasPoint.x, y:this._lastCanvasPoint.y};
+			lastChartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( lastChartDataPoint, this._canvas );
+			lastChartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( lastChartDataPoint, this._chartDataWindow );
+
+			var deltaX = chartDataPoint.x - lastChartDataPoint.x;
+			var deltaY = chartDataPoint.y - lastChartDataPoint.y;
+			this._chartDataWindow.x -= deltaX;
+			this._chartDataWindow.y -= deltaY;
+
+			this._lastCanvasPoint = canvasPoint;
+		
+			this.update();
+		};
+
+		ChartDataController.prototype._onMouseUp = function( event )
+		{
+			this._lastCanvasPoint = null;
+		};
+
+		ChartDataController.prototype._onWheel = function( event )
+		{
+			if ( event.ctrlKey )
+			{
+				var target = event.target || event.srcElement;
+				var rect = target.getBoundingClientRect();
+				var offsetX = event.clientX - rect.left;
+				var offsetY = event.clientY - rect.top;
+
+				var wheelDelta = 0;
+				if ( Math.abs(event.deltaX)>Math.abs(event.deltaY) )
+				{
+					wheelDelta = event.deltaX;
+				}
+				else
+				{
+					wheelDelta = event.deltaY;
+				}
+
+				var canvasPoint = {x:offsetX, y:offsetY};
+				var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
+				chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
+				chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+				
+				var zoomFactor = 1.0;
+				var k = 0.001
+				if ( wheelDelta<0 )
+				{	
+					zoomFactor += k;
+				}
+				else
+				{
+					zoomFactor -= k;
+				}
+				for ( var i=0; i<Math.abs(wheelDelta); ++i )
+				{
+					this._chartDataWindow.width *= zoomFactor;
+					this._chartDataWindow.height *= zoomFactor;
+				}
+
+				var chartDataPoint2 = {x:canvasPoint.x, y:canvasPoint.y};
+				chartDataPoint2 = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint2, this._canvas );
+				chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
+				this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
+				this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
+			}
+			else
+			{
+				var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
+				var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+				var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
+				var dx = event.deltaX * (c1.x - c0.x) * s;
+				var dy = event.deltaY * (c1.y - c0.y) * s;
+				this._chartDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
+				this._chartDataWindow.y -= dy;
+			}
+
+			this.update();
+			
+			event.preventDefault();
+		};
+
+		/*
+			HttpRequest
+		*/
+		function HttpRequest()
+		{
+		}
+
+		HttpRequest.request = function( url, method, data, headers )
 		{
 			var promise = new Promise(
 				function(resolve, reject) 
@@ -417,7 +432,21 @@ console.log(wheelDelta);
 
 		function main()
 		{
-			makeHttpRequestPromise( '/api/devices/1D80C/messages', 'GET')
+			var canvas = document.getElementById('theCanvas');
+			canvas.focus();
+							
+			var chartData = [];
+			var chartDataWindow = {
+				x: -20,		
+				y: -5,
+				width: 500,
+				height: 50 
+			};
+
+			var chartDataController = new ChartDataController( canvas, chartData, chartDataWindow );
+			chartDataController.update();
+
+			HttpRequest.request( '/api/devices/1D80C/messages', 'GET')
 				.then(
 					function( response )
 					{
@@ -435,7 +464,6 @@ console.log(wheelDelta);
 						}
 
 						// Test displaying the data. We convert time in minutes and rebase it ot the first value (of the first page for now)
-						var chartData = [];
 						var t0 = messages.data[0].time;
 						for ( var i=0; i<messages.data.length; ++i  )
 						{
@@ -443,22 +471,12 @@ console.log(wheelDelta);
 							chartData.push( {x:(message.time-t0) / 60, y:message.weatherData.temperature} );
 						}
 						
-						var canvas = document.getElementById('theCanvas');
-						canvas.focus();
-						chartDataWindow = {
-							x: -15,		
-							y: -5,
-							width: 10 * 50,
-							height: 50 
-						};
-
-						var presenter = new ChartDataPresenter( canvas, chartData, chartDataWindow );
-						presenter.update();
+						chartDataController
 					})
 				.catch(
 					function( error )
 					{
-						div.innerHTML = error.toString();
+						alert( error.toString() );
 					});
 		}
 
