@@ -6,49 +6,70 @@ var fs = require('fs');
 
 var sigfoxBackendAuth = null;
 
-function forwardApiCall( apiPath, res )
+function forwardApiCall( path, res )
 {
+	console.log("Forwarding Sigfox REST api call: " + path);
+	
 	var options = {
 		hostname: 'backend.sigfox.com',
-		path: apiPath,
+		path: path,
 		auth: sigfoxBackendAuth,
 	};
 
 	callback = function(response) 
-	{
-		//console.log('statusCode:', response.statusCode);
-		//console.log('headers:', response.headers);
-		var str = '';
-		response.on('data', function (chunk) 
-			{
-				str += chunk;
-			});	
+		{
+			//console.log('statusCode:', response.statusCode);
+			//console.log('headers:', response.headers);
+			var str = '';
+			response.on('data', function (chunk) 
+				{
+					str += chunk;
+				});	
 
-		response.on('end', 
-			function() 
+			response.on('end', 
+				function() 
+				{
+					//console.log(str);
+					res.writeHead(200, {"Content-Type:": "application/json"});
+					res.write(str);
+					res.end();
+				});
+		};
+
+	https.request(options, callback).end();
+}
+
+function serveFile( filename, res )
+{
+	console.log("Serving file: " + filename);
+	fs.readFile(filename, 'utf8', 
+		function(err, data) 
 			{
-				//console.log(str);
-				res.writeHead(200, {"Content-Type:": "application/json"});
-				res.write(str);
+		  		if (err) {
+		    		return console.error(err);
+		  		}
+		  		res.writeHead(200); //{"Content-Type:": "application/json"});	// The server should certainly provide content type based on file extension
+				res.write(data);
 				res.end();
 			});
-	}
-	https.request(options, callback).end();
 }
 
 var server = http.createServer( 
 	function(req, res)
 	{
-		console.log("request: " + req.url );
+		//console.log("HTTP request: " + req.url );
 
-		var page = url.parse(req.url).pathname;
-		console.log("page: " + page );
-		
-		if ( page.indexOf('/api/')===0 )
+		var path = url.parse(req.url).pathname;
+		if ( path.indexOf('/api/')===0 )
 		{
-			forwardApiCall( page, res );
+			forwardApiCall( path, res );
 		}
-		else if ( page==='/')
+		else if ( path.indexOf('/files/')===0 )
+		{
+			var filename = path.substr(1);		// Remove the first '/'
+			serveFile( filename, res );
+		}
+		else if ( path==='/')
 		{
 			fs.readFile('Tempmon.html', 'utf8', 
 			function (err,data) 
@@ -59,7 +80,7 @@ var server = http.createServer(
 		  		res.end(data);
 			});
 		}
-		else if ( page==='/testurl')
+		else if ( path==='/testurl')
 		{
 			res.writeHead(200, {"Content-Type:": "text/html"});
 
@@ -89,7 +110,7 @@ var server = http.createServer(
 				'</html>');
 			res.end();
 		}
-		else if ( page==='/about')
+		else if ( path==='/about')
 		{
 			res.writeHead(200, {"Content-Type:": "text/html"});
 			res.write(
@@ -105,7 +126,7 @@ var server = http.createServer(
 				'</html>');
 			res.end();
 		}
-		else if ( page==='/test')
+		else if ( path==='/test')
 		{
 			res.writeHead(200, {"Content-Type:": "application/json"});
 			res.write(
@@ -140,16 +161,16 @@ console.log("Starting server...");
 file.write('toto');
 file.end('titi');*/
 
+console.log("Loading credentials...");
 fs.readFile('SigfoxBackendAuth.txt', 'utf8', 
 	function (err,data) 
 	{
-		console.log("Loaded credentials");
+		console.log("Credentials loaded");
   		if (err) {
     		return console.error(err);
   		}
   		sigfoxBackendAuth = data;
 	});
-
 
 server.on('close', 
 	function()
