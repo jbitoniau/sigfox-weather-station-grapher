@@ -184,6 +184,18 @@
 			ChartDataPresenter.update( this._canvas, this._chartData, this._chartDataWindow );
 		};
 
+		ChartDataController._getCanvasPointFromEvent = function( event )
+		{
+			// The mouse position in the event happening on the canvas is relative to the whole document,
+			// not the canvas. The "offset" properties is what we want, but it's not consistantly available 
+			// on all browsers, so we calculate it here. See http://www.jacklmoore.com/notes/mouse-position/
+			var target = event.target || event.srcElement;
+			var rect = target.getBoundingClientRect();
+			var offsetX = event.clientX - rect.left;
+			var offsetY = event.clientY - rect.top;
+			return {x:offsetX, y:offsetY};
+		};
+
 		ChartDataController.prototype._onKeyDown = function( event )
 		{
 			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
@@ -245,13 +257,7 @@
 
 		ChartDataController.prototype._onMouseDown = function( event )
 		{
-			// http://www.jacklmoore.com/notes/mouse-position/
-			var target = event.target || event.srcElement;
-			var rect = target.getBoundingClientRect();
-			var offsetX = event.clientX - rect.left;
-			var offsetY = event.clientY - rect.top;
-
-			this._lastCanvasPoint = {x:offsetX, y:offsetY};
+			this._lastCanvasPoint = ChartDataController._getCanvasPointFromEvent( event );
 		};
 
 		ChartDataController.prototype._onMouseMove = function( event )
@@ -259,18 +265,12 @@
 			if ( !this._lastCanvasPoint )
 				return;
 
-			var target = event.target || event.srcElement;
-			var rect = target.getBoundingClientRect();
-			var offsetX = event.clientX - rect.left;
-			var offsetY = event.clientY - rect.top;
+			var canvasPoint = ChartDataController._getCanvasPointFromEvent( event );
 
-			var canvasPoint = {x:offsetX, y:offsetY};
-			var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
-			chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
+			var chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( canvasPoint, this._canvas );
 			chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
 
-			var lastChartDataPoint = {x:this._lastCanvasPoint.x, y:this._lastCanvasPoint.y};
-			lastChartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( lastChartDataPoint, this._canvas );
+			var lastChartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( this._lastCanvasPoint, this._canvas );
 			lastChartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( lastChartDataPoint, this._chartDataWindow );
 
 			var deltaX = chartDataPoint.x - lastChartDataPoint.x;
@@ -292,11 +292,6 @@
 		{
 			if ( event.ctrlKey )
 			{
-				var target = event.target || event.srcElement;
-				var rect = target.getBoundingClientRect();
-				var offsetX = event.clientX - rect.left;
-				var offsetY = event.clientY - rect.top;
-
 				var wheelDelta = 0;
 				if ( Math.abs(event.deltaX)>Math.abs(event.deltaY) )
 				{
@@ -307,9 +302,9 @@
 					wheelDelta = event.deltaY;
 				}
 
-				var canvasPoint = {x:offsetX, y:offsetY};
-				var chartDataPoint = {x:canvasPoint.x, y:canvasPoint.y};
-				chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint, this._canvas );
+				var canvasPoint = ChartDataController._getCanvasPointFromEvent( event );
+			
+				var	chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( canvasPoint, this._canvas );
 				chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
 				
 				var zoomFactor = 1.0;
@@ -328,8 +323,7 @@
 					this._chartDataWindow.height *= zoomFactor;
 				}
 
-				var chartDataPoint2 = {x:canvasPoint.x, y:canvasPoint.y};
-				chartDataPoint2 = ChartDataPresenter.canvasPointToChartWindowPoint( chartDataPoint2, this._canvas );
+				var chartDataPoint2 = ChartDataPresenter.canvasPointToChartWindowPoint( canvasPoint, this._canvas );
 				chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
 				this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
 				this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
@@ -402,7 +396,7 @@
 					}
 				});
 			return promise;
-		}
+		};
 		
 		function createUint8ArrayFromMessageString( messageString )
 		{
