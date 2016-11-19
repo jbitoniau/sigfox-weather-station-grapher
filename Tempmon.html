@@ -15,13 +15,13 @@
 		'use strict';
 
 		/*
-			ChartDataPresenter
+			GraphDataPresenter
 		*/
-		function ChartDataPresenter() 
+		function GraphDataPresenter() 
 		{	
 		}
 
-		ChartDataPresenter.update = function( canvas, chartData, chartDataWindow )
+		GraphDataPresenter.update = function( canvas, graphData, graphDataWindow )
 		{
 			canvas.width = canvas.clientWidth;
 			canvas.height = canvas.clientHeight;
@@ -35,18 +35,18 @@
 			context.strokeStyle = "#CCCCCC";
 			context.font = textSize + "px sans-serif";
 			context.fillStyle="#CCCCCC";
-			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, chartDataWindow );
-			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, chartDataWindow );
+			var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, graphDataWindow );
+			var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, graphDataWindow );
 			
 			var dy = c1.y - c0.y;
-			var yspacing = Math.pow( 10, Math.floor( Math.log10(dy) ) );   // in chart data unit
+			var yspacing = Math.pow( 10, Math.floor( Math.log10(dy) ) );   // in graph data unit
 			var y0 = Math.floor( c0.y / yspacing ) * yspacing;
 			var y1 = Math.floor( c1.y / yspacing ) * yspacing;
 			for ( var y=y0; y<=y1; y+=yspacing )
 			{
 				context.beginPath();
-				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:y}, chartDataWindow );
-				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, canvas );
+				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:y}, graphDataWindow );
+				var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
 				context.lineTo(0, canvasPoint.y);
 				context.lineTo(canvasWidth, canvasPoint.y);
 				context.stroke();
@@ -55,14 +55,14 @@
 			}
 
 			var dx = c1.x - c0.x;
-			var xspacing = Math.pow( 10, Math.floor( Math.log10(dx) ) );   // in chart data unit
+			var xspacing = Math.pow( 10, Math.floor( Math.log10(dx) ) );   // in graph data unit
 			var x0 = Math.floor( c0.x / xspacing ) * xspacing;
 			var x1 = Math.floor( c1.x / xspacing ) * xspacing;
 			for ( var x=x0; x<=x1; x+=xspacing )
 			{
 				context.beginPath();
-				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:x, y:0}, chartDataWindow );
-				var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, canvas );
+				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x, y:0}, graphDataWindow );
+				var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
 				context.lineTo(canvasPoint.x, 0);
 				context.lineTo(canvasPoint.x, canvasHeight);
 				context.stroke();
@@ -72,8 +72,8 @@
 
 			// Axes
 			context.strokeStyle="#222222";
-			var originwp = ChartDataPresenter.chartDataPointToChartWindowPoint( {x:0, y:0}, chartDataWindow );
-			var origincp = ChartDataPresenter.chartWindowPointToCanvasPoint( originwp, canvas );
+			var originwp = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:0}, graphDataWindow );
+			var origincp = GraphDataPresenter.graphWindowPointToCanvasPoint( originwp, canvas );
 			if ( originwp.y>=0 && originwp.y<=1 )
 			{
 				context.beginPath();	
@@ -93,12 +93,12 @@
 			context.beginPath();
 			context.strokeStyle="#666666";
 			context.fillStyle="#444444";
-			for ( var i=0; i<chartData.length; i++ )
+			for ( var i=0; i<graphData.length; i++ )
 			{
-				var windowPoint = ChartDataPresenter.chartDataPointToChartWindowPoint( chartData[i], chartDataWindow );
-				if ( ChartDataPresenter.isInUnitSquare(windowPoint) )
+				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+				if ( GraphDataPresenter.isInUnitSquare(windowPoint) )
 				{
-					var canvasPoint = ChartDataPresenter.chartWindowPointToCanvasPoint( windowPoint, canvas );
+					var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
 					context.lineTo(canvasPoint.x, canvasPoint.y);
 					context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
 				}
@@ -106,24 +106,24 @@
 			context.stroke();
 		};
 
-		ChartDataPresenter.isInUnitSquare = function( point )
+		GraphDataPresenter.isInUnitSquare = function( point )
 		{
 			if ( point.x<0 || point.y<0 || point.x>=1 || point.y>=1 )
 				return false;
 			return true;
 		};
 
-		ChartDataPresenter.chartDataPointToChartWindowPoint = function( chartDataPoint, chartDataWindow )
+		GraphDataPresenter.graphDataPointToGraphWindowPoint = function( graphDataPoint, graphDataWindow )
 		{
-			var x2 = (chartDataPoint.x - chartDataWindow.x) / chartDataWindow.width;
-			var y2 = (chartDataPoint.y - chartDataWindow.y) / chartDataWindow.height;
+			var x2 = (graphDataPoint.x - graphDataWindow.x) / graphDataWindow.width;
+			var y2 = (graphDataPoint.y - graphDataWindow.y) / graphDataWindow.height;
 			return {x:x2, y:y2};
 		};
 
-		ChartDataPresenter.chartWindowPointToCanvasPoint = function( chartWindowPoint, canvas, roundToInteger )
+		GraphDataPresenter.graphWindowPointToCanvasPoint = function( graphWindowPoint, canvas, roundToInteger )
 		{
-			var x2 = chartWindowPoint.x * canvas.width;
-			var y2 = (1-chartWindowPoint.y) * canvas.height;
+			var x2 = graphWindowPoint.x * canvas.width;
+			var y2 = (1-graphWindowPoint.y) * canvas.height;
 			if ( /*roundToInteger===undefined ||*/ roundToInteger )
 			{
 				x2 = Math.round(x2);
@@ -132,28 +132,28 @@
 			return {x:x2, y:y2};
 		};
 
-		ChartDataPresenter.canvasPointToChartWindowPoint = function( canvasPoint, canvas )
+		GraphDataPresenter.canvasPointToGraphWindowPoint = function( canvasPoint, canvas )
 		{
 			var x2 = canvasPoint.x / canvas.width;
 			var y2 = (canvas.height-canvasPoint.y) / canvas.height;
 			return {x:x2, y:y2};
 		};
 
-		ChartDataPresenter.chartWindowPointToChartDataPoint = function( chartWindowPoint, chartDataWindow )
+		GraphDataPresenter.graphWindowPointToGraphDataPoint = function( graphWindowPoint, graphDataWindow )
 		{
-			var x2 = (chartWindowPoint.x * chartDataWindow.width) + chartDataWindow.x;
-			var y2 = (chartWindowPoint.y * chartDataWindow.height) + chartDataWindow.y;
+			var x2 = (graphWindowPoint.x * graphDataWindow.width) + graphDataWindow.x;
+			var y2 = (graphWindowPoint.y * graphDataWindow.height) + graphDataWindow.y;
 			return {x:x2, y:y2};
 		};
 
 		/*
-			ChartDataController
+			GraphController
 		*/
-		function ChartDataController( canvas, chartData, chartDataWindow ) 
+		function GraphController( canvas, graphData, graphDataWindow ) 
 		{	
 			this._canvas = canvas;
-			this._chartData = chartData;
-			this._chartDataWindow = chartDataWindow;
+			this._graphData = graphData;
+			this._graphDataWindow = graphDataWindow;
 
 			this._onKeyDownHandler = this._onKeyDown.bind(this);
 			this._onMouseDownHandler = this._onMouseDown.bind(this);
@@ -170,7 +170,7 @@
 			this._lastCanvasPoint = null;
 		}
 		
-		ChartDataController.prototype.dispose = function()
+		GraphController.prototype.dispose = function()
 		{
 			this._canvas.removeEventListener( 'keydown', this._onKeyDownHandler );
 			this._canvas.removeEventListener( 'mousedown', this._onMouseDownHandler );
@@ -179,12 +179,12 @@
 			this._canvas.removeEventListener( 'wheel', this._onWheelHandler );
 		};
 
-		ChartDataController.prototype.update = function()
+		GraphController.prototype.update = function()
 		{
-			ChartDataPresenter.update( this._canvas, this._chartData, this._chartDataWindow );
+			GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow );
 		};
 
-		ChartDataController._getCanvasPointFromEvent = function( event )
+		GraphController._getCanvasPointFromEvent = function( event )
 		{
 			// The mouse position in the event happening on the canvas is relative to the whole document,
 			// not the canvas. The "offset" properties is what we want, but it's not consistantly available 
@@ -196,29 +196,29 @@
 			return {x:offsetX, y:offsetY};
 		};
 
-		ChartDataController.prototype._onKeyDown = function( event )
+		GraphController.prototype._onKeyDown = function( event )
 		{
-			var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
-			var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+			var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, this._graphDataWindow );
+			var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, this._graphDataWindow );
 			var s = 0.1;
 			var dx = (c1.x - c0.x) * s;
 			var dy = (c1.y - c0.y) * s;
 
 			if ( event.keyCode===37 )				// left arrow
 			{
-				this._chartDataWindow.x -= dx;
+				this._graphDataWindow.x -= dx;
 			}
 			else if ( event.keyCode===39 )			// right arrow
 			{
-				this._chartDataWindow.x += dx;
+				this._graphDataWindow.x += dx;
 			}
 			else if ( event.keyCode===38 )			// up arrow
 			{
-				this._chartDataWindow.y += dy;
+				this._graphDataWindow.y += dy;
 			}
 			else if ( event.keyCode===40 )			// down arrow
 			{
-				this._chartDataWindow.y -= dy;
+				this._graphDataWindow.y -= dy;
 			}
 			else if ( event.keyCode===187 ||		// +/=
 					  event.keyCode===189 )			// -/_
@@ -234,61 +234,61 @@
 					zoomFactor += k;
 				}
 
-				var chartDataPoint = {x:0.5, y:0.5};
-				chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+				var graphDataPoint = {x:0.5, y:0.5};
+				graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
 
-				this._chartDataWindow.width *= zoomFactor;
-				this._chartDataWindow.height *= zoomFactor;
+				this._graphDataWindow.width *= zoomFactor;
+				this._graphDataWindow.height *= zoomFactor;
 
-				var chartDataPoint2 = {x:0.5, y:0.5};
-				chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
+				var graphDataPoint2 = {x:0.5, y:0.5};
+				graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint2, this._graphDataWindow );
 
-				this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
-				this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
+				this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
+				this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
 			}
 			else if ( event.keyCode===189 )			// -/_
 			{
-				this._chartDataWindow.width *= 1.1;
-				this._chartDataWindow.height *= 1.1;
+				this._graphDataWindow.width *= 1.1;
+				this._graphDataWindow.height *= 1.1;
 			}
 
 			this.update();
 		};
 
-		ChartDataController.prototype._onMouseDown = function( event )
+		GraphController.prototype._onMouseDown = function( event )
 		{
-			this._lastCanvasPoint = ChartDataController._getCanvasPointFromEvent( event );
+			this._lastCanvasPoint = GraphController._getCanvasPointFromEvent( event );
 		};
 
-		ChartDataController.prototype._onMouseMove = function( event )
+		GraphController.prototype._onMouseMove = function( event )
 		{
 			if ( !this._lastCanvasPoint )
 				return;
 
-			var canvasPoint = ChartDataController._getCanvasPointFromEvent( event );
+			var canvasPoint = GraphController._getCanvasPointFromEvent( event );
 
-			var chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( canvasPoint, this._canvas );
-			chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+			var graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
+			graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
 
-			var lastChartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( this._lastCanvasPoint, this._canvas );
-			lastChartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( lastChartDataPoint, this._chartDataWindow );
+			var lastGraphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( this._lastCanvasPoint, this._canvas );
+			lastGraphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( lastGraphDataPoint, this._graphDataWindow );
 
-			var deltaX = chartDataPoint.x - lastChartDataPoint.x;
-			var deltaY = chartDataPoint.y - lastChartDataPoint.y;
-			this._chartDataWindow.x -= deltaX;
-			this._chartDataWindow.y -= deltaY;
+			var deltaX = graphDataPoint.x - lastGraphDataPoint.x;
+			var deltaY = graphDataPoint.y - lastGraphDataPoint.y;
+			this._graphDataWindow.x -= deltaX;
+			this._graphDataWindow.y -= deltaY;
 
 			this._lastCanvasPoint = canvasPoint;
 		
 			this.update();
 		};
 
-		ChartDataController.prototype._onMouseUp = function( event )
+		GraphController.prototype._onMouseUp = function( event )
 		{
 			this._lastCanvasPoint = null;
 		};
 
-		ChartDataController.prototype._onWheel = function( event )
+		GraphController.prototype._onWheel = function( event )
 		{
 			if ( event.ctrlKey )
 			{
@@ -302,10 +302,10 @@
 					wheelDelta = event.deltaY;
 				}
 
-				var canvasPoint = ChartDataController._getCanvasPointFromEvent( event );
+				var canvasPoint = GraphController._getCanvasPointFromEvent( event );
 			
-				var	chartDataPoint = ChartDataPresenter.canvasPointToChartWindowPoint( canvasPoint, this._canvas );
-				chartDataPoint = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint, this._chartDataWindow );
+				var	graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
+				graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
 				
 				var zoomFactor = 1.0;
 				var k = 0.001
@@ -319,24 +319,24 @@
 				}
 				for ( var i=0; i<Math.abs(wheelDelta); ++i )
 				{
-					this._chartDataWindow.width *= zoomFactor;
-					this._chartDataWindow.height *= zoomFactor;
+					this._graphDataWindow.width *= zoomFactor;
+					this._graphDataWindow.height *= zoomFactor;
 				}
 
-				var chartDataPoint2 = ChartDataPresenter.canvasPointToChartWindowPoint( canvasPoint, this._canvas );
-				chartDataPoint2 = ChartDataPresenter.chartWindowPointToChartDataPoint( chartDataPoint2, this._chartDataWindow );
-				this._chartDataWindow.x -= (chartDataPoint2.x - chartDataPoint.x);
-				this._chartDataWindow.y -= (chartDataPoint2.y - chartDataPoint.y);
+				var graphDataPoint2 = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
+				graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint2, this._graphDataWindow );
+				this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
+				this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
 			}
 			else
 			{
-				var c0 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:0, y:0}, this._chartDataWindow );
-				var c1 = ChartDataPresenter.chartWindowPointToChartDataPoint( {x:1, y:1}, this._chartDataWindow );
+				var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, this._graphDataWindow );
+				var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, this._graphDataWindow );
 				var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
 				var dx = event.deltaX * (c1.x - c0.x) * s;
 				var dy = event.deltaY * (c1.y - c0.y) * s;
-				this._chartDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
-				this._chartDataWindow.y -= dy;
+				this._graphDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
+				this._graphDataWindow.y -= dy;
 			}
 
 			this.update();
@@ -398,47 +398,47 @@
 			return promise;
 		};
 		
-		function createUint8ArrayFromMessageString( messageString )
-		{
-			// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
-			var messageLengthInBytes = 12;
-			var buffer = new ArrayBuffer(messageLengthInBytes);
-			var uint8Array = new Uint8Array( buffer );
-			for ( var i=0; i<messageLengthInBytes; i++ )
-			{
-				var byteAsHex = messageString.substr( i*2, 2 );
-				var byte = parseInt( byteAsHex, 16 );
-				uint8Array[i] = byte;
-			}
-			return uint8Array;
-		}
-
-		function getWeatherDataFromUint8Array( uint8Array )
-		{
-			var dataView = new DataView(uint8Array.buffer);
-			var weatherData = {
-				pressure: dataView.getUint32(0),		
-				temperature: dataView.getFloat32(4),
-				humidity: dataView.getUint32(8)
-			}
-			return weatherData;
-		}
-
 		function main()
 		{
+			var createUint8ArrayFromMessageString = function( messageString )
+				{
+					// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
+					var messageLengthInBytes = 12;
+					var buffer = new ArrayBuffer(messageLengthInBytes);
+					var uint8Array = new Uint8Array( buffer );
+					for ( var i=0; i<messageLengthInBytes; i++ )
+					{
+						var byteAsHex = messageString.substr( i*2, 2 );
+						var byte = parseInt( byteAsHex, 16 );
+						uint8Array[i] = byte;
+					}
+					return uint8Array;
+				};
+
+			var getWeatherDataFromUint8Array = function( uint8Array )
+				{
+					var dataView = new DataView(uint8Array.buffer);
+					var weatherData = {
+						pressure: dataView.getUint32(0),		
+						temperature: dataView.getFloat32(4),
+						humidity: dataView.getUint32(8)
+					};
+					return weatherData;
+				};
+
 			var canvas = document.getElementById('theCanvas');
 			canvas.focus();
 							
-			var chartData = [];
-			var chartDataWindow = {
+			var graphData = [];
+			var graphDataWindow = {
 				x: -20,		
 				y: -5,
 				width: 500,
 				height: 50 
 			};
 
-			var chartDataController = new ChartDataController( canvas, chartData, chartDataWindow );
-			chartDataController.update();
+			var graphController = new GraphController( canvas, graphData, graphDataWindow );
+			graphController.update();
 
 			HttpRequest.request( '/api/devices/1D80C/messages', 'GET')
 				.then(
@@ -462,10 +462,10 @@
 						for ( var i=0; i<messages.data.length; ++i  )
 						{
 							var message = messages.data[i];
-							chartData.push( {x:(message.time-t0) / 60, y:message.weatherData.temperature} );
+							graphData.push( {x:(message.time-t0) / 60, y:message.weatherData.temperature} );
 						}
 						
-						chartDataController
+						graphController
 					})
 				.catch(
 					function( error )
