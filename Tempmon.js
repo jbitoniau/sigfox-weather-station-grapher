@@ -1,3 +1,5 @@
+'use strict';
+
 var http = require('http');
 var https = require('https');
 var url = require('url');
@@ -5,6 +7,23 @@ var querystring = require('querystring');
 var fs = require('fs');
 
 var sigfoxBackendAuth = null;
+
+function createHTMLErrorResponse( res, code, message )
+{
+	res.writeHead(code, {"Content-Type:": "text/html"});
+	res.write(
+		'<!DOCTYPE html>'+
+		'<html>'+
+		'    <head>'+
+		'        <meta charset="utf-8" />'+
+		'        <title>Error</title>'+
+		'    </head>'+ 
+		'    <body>'+
+		'     	<p>' + message + '</p>'+
+		'    </body>'+
+		'</html>');
+	res.end();
+}
 
 function forwardApiCall( path, res )
 {
@@ -16,7 +35,7 @@ function forwardApiCall( path, res )
 		auth: sigfoxBackendAuth,
 	};
 
-	callback = function(response) 
+	var callback = function(response) 
 		{
 			//console.log('statusCode:', response.statusCode);
 			//console.log('headers:', response.headers);
@@ -29,14 +48,22 @@ function forwardApiCall( path, res )
 			response.on('end', 
 				function() 
 				{
-					//console.log(str);
 					res.writeHead(200, {"Content-Type:": "application/json"});
 					res.write(str);
 					res.end();
 				});
 		};
 
-	https.request(options, callback).end();
+	var req = https.request(options, callback);
+
+	req.on('error', 
+		function(err) 
+		{
+			console.log("ERROR: " + err);
+			createHTMLErrorResponse( res, 500, err );
+		});
+
+	req.end();
 }
 
 function serveFile( filename, res )
@@ -45,12 +72,16 @@ function serveFile( filename, res )
 	fs.readFile(filename, 'utf8', 
 		function(err, data) 
 			{
-		  		if (err) {
-		    		return console.error(err);
+		  		if ( err ) 
+		  		{
+		    		createHTMLErrorResponse( res, 500, err );
 		  		}
-		  		res.writeHead(200); //{"Content-Type:": "application/json"});	// The server should certainly provide content type based on file extension
-				res.write(data);
-				res.end();
+		  		else
+		  		{
+		  			res.writeHead(200); //{"Content-Type:": "application/json"});	// The server should certainly provide content type based on file extension
+					res.write(data);
+					res.end();
+				}
 			});
 }
 
@@ -138,19 +169,7 @@ var server = http.createServer(
 		}
 		else
 		{
-			res.writeHead(404, {"Content-Type:": "text/html"});
-			res.write(
-				'<!DOCTYPE html>'+
-				'<html>'+
-				'    <head>'+
-				'        <meta charset="utf-8" />'+
-				'        <title>Ma page Node.js !</title>'+
-				'    </head>'+ 
-				'    <body>'+
-				'     	<p>:-( Page not found</p>'+
-				'    </body>'+
-				'</html>');
-			res.end();
+			createHTMLErrorResponse( res, 404, "Page not found");
 		}
 	});
 
