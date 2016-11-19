@@ -143,6 +143,7 @@ file.end('titi');*/
 fs.readFile('SigfoxBackendAuth.txt', 'utf8', 
 	function (err,data) 
 	{
+		console.log("Loaded credentials");
   		if (err) {
     		return console.error(err);
   		}
