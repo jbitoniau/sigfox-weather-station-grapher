@@ -5,17 +5,21 @@
 	</head>
 	
 	<body>
-		<div style="position:absolute; top:15px; left:15px; bottom:15px; right:15px;">
-			<canvas id="theCanvas" style="width:100%; height:100%; border:1px solid rgba(255, 0, 0, 0.3);" tabindex="0">
-				Your browser does not support the HTML5 canvas tag.
-			</canvas>
+		<div style="position:absolute; top:5px; left:5px; bottom:5px; right:5px;">
+			<div style="position:relative; width:100%; height:100%; display:flex; flex-direction:column">
+				<canvas id="graphCanvas" style="flex:1 1 auto; min-height:100px; min-width:100px; border:1px solid #555555;" tabindex="0"></canvas>
+				<div style="flex:0 0 30px; display:flex; flex-direction:row; justify-content:flex-end; align-items:stretch; margin-top:3px">
+					<button id="graphZoomInButton" style="flex:0 0 30px; font-size:15px; margin-left:3px">+</button>
+					<button id="graphZoomOutButton" style="flex:0 0 30px; font-size:15px; margin-left:3px">-</button>
+				</div>
+			</div>
 		</div>
 	</body>
 
-	<script src='files/GraphDataPresenter.js'></script>
-	<script src='files/GraphController.js'></script>
-	<script src='files/HttpRequest.js'></script>
-	<script src='files/Main.js'></script>
+	<script src="files/GraphDataPresenter.js"></script>
+	<script src="files/GraphController.js"></script>
+	<script src="files/HttpRequest.js"></script>
+	<script src="files/Main.js"></script>
 	<script>
 		Main();
 	</script>

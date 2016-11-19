@@ -47,6 +47,22 @@ GraphController.prototype.update = function()
 	GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow );
 };
 
+GraphController.prototype.zoom = function( zoomFactor, graphWindowPointCenter )
+{
+	if ( !graphWindowPointCenter )
+		graphWindowPointCenter = {x:0.5, y:0.5};
+	
+	var graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPointCenter, this._graphDataWindow );
+
+	this._graphDataWindow.width *= zoomFactor;
+	this._graphDataWindow.height *= zoomFactor;
+
+	var graphWindowPointCenter2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPointCenter, this._graphDataWindow );
+
+	this._graphDataWindow.x -= (graphWindowPointCenter2.x - graphDataPoint.x);
+	this._graphDataWindow.y -= (graphWindowPointCenter2.y - graphDataPoint.y);
+};
+
 GraphController._getCanvasPointFromEvent = function( event )
 {
 	// The mouse position in the event happening on the canvas is relative to the whole document,

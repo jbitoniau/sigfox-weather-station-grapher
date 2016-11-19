@@ -2,33 +2,7 @@
 
 function Main()
 {
-	var createUint8ArrayFromMessageString = function( messageString )
-		{
-			// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
-			var messageLengthInBytes = 12;
-			var buffer = new ArrayBuffer(messageLengthInBytes);
-			var uint8Array = new Uint8Array( buffer );
-			for ( var i=0; i<messageLengthInBytes; i++ )
-			{
-				var byteAsHex = messageString.substr( i*2, 2 );
-				var byte = parseInt( byteAsHex, 16 );
-				uint8Array[i] = byte;
-			}
-			return uint8Array;
-		};
-
-	var getWeatherDataFromUint8Array = function( uint8Array )
-		{
-			var dataView = new DataView(uint8Array.buffer);
-			var weatherData = {
-				pressure: dataView.getUint32(0),		
-				temperature: dataView.getFloat32(4),
-				humidity: dataView.getUint32(8)
-			};
-			return weatherData;
-		};
-
-	var canvas = document.getElementById('theCanvas');
+	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
 					
 	var graphData = [];
@@ -42,10 +16,53 @@ function Main()
 	var graphController = new GraphController( canvas, graphData, graphDataWindow );
 	graphController.update();
 
+	var zoomInButton = document.getElementById('graphZoomInButton');
+	zoomInButton.onclick = 
+		function( event ) 
+		{
+			graphController.zoom( 0.8 );
+			graphController.update();
+		};
+
+	var zoomOutButton = document.getElementById('graphZoomOutButton');
+	zoomOutButton.onclick = 
+		function( event ) 
+		{
+			graphController.zoom( 1.2 );
+			graphController.update();
+		};
+
 	HttpRequest.request( '/api/devices/1D80C/messages', 'GET')
 		.then(
 			function( response )
 			{
+				var createUint8ArrayFromMessageString = function( messageString )
+					{
+						// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
+						var messageLengthInBytes = 12;
+						var buffer = new ArrayBuffer(messageLengthInBytes);
+						var uint8Array = new Uint8Array( buffer );
+						for ( var i=0; i<messageLengthInBytes; i++ )
+						{
+							var byteAsHex = messageString.substr( i*2, 2 );
+							var byte = parseInt( byteAsHex, 16 );
+							uint8Array[i] = byte;
+						}
+						return uint8Array;
+					};
+
+				var getWeatherDataFromUint8Array = function( uint8Array )
+					{
+						var dataView = new DataView(uint8Array.buffer);
+						var weatherData = {
+							pressure: dataView.getUint32(0),		
+							temperature: dataView.getFloat32(4),
+							humidity: dataView.getUint32(8)
+						};
+						return weatherData;
+					};
+
+
 				var messages = JSON.parse(response);
 				for ( var i=0; i<messages.data.length; ++i  )
 				{
