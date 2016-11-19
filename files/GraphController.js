@@ -14,13 +14,19 @@ function GraphController( canvas, graphData, graphDataWindow )
 	this._onMouseMoveHandler = this._onMouseMove.bind(this);
 	this._onMouseUpHandler = this._onMouseUp.bind(this);
 	this._onWheelHandler = this._onWheel.bind(this);
-
+	this._onTouchStartHandler = this._onTouchStart.bind(this);
+	this._onTouchMoveHandler = this._onTouchMove.bind(this);
+	this._onTouchEndHandler = this._onTouchEnd.bind(this);
+	
 	this._canvas.addEventListener( 'keydown', this._onKeyDownHandler );
 	this._canvas.addEventListener( 'mousedown', this._onMouseDownHandler );
 	this._canvas.addEventListener( 'mousemove', this._onMouseMoveHandler );
 	this._canvas.addEventListener( 'mouseup', this._onMouseUpHandler );
 	this._canvas.addEventListener( 'wheel', this._onWheelHandler );
-	
+	this._canvas.addEventListener( 'touchstart', this._onTouchStartHandler );
+	this._canvas.addEventListener( 'touchmove', this._onTouchMoveHandler );
+	this._canvas.addEventListener( 'touchend', this._onTouchEndHandler );
+
 	this._lastCanvasPoint = null;
 }
 
@@ -31,6 +37,9 @@ GraphController.prototype.dispose = function()
 	this._canvas.removeEventListener( 'mousemove', this._onMouseMoveHandler );
 	this._canvas.removeEventListener( 'mouseup', this._onMouseUpHandler );
 	this._canvas.removeEventListener( 'wheel', this._onWheelHandler );
+	this._canvas.removeEventListener( 'touchstart', this._onTouchStartHandler );
+	this._canvas.removeEventListener( 'touchmove', this._onTouchMoveHandler );
+	this._canvas.removeEventListener( 'touchend', this._onTouchEndHandler );
 };
 
 GraphController.prototype.update = function()
@@ -48,6 +57,21 @@ GraphController._getCanvasPointFromEvent = function( event )
 	var offsetX = event.clientX - rect.left;
 	var offsetY = event.clientY - rect.top;
 	return {x:offsetX, y:offsetY};
+};
+
+GraphController._getCanvasPointsFromTouchEvent = function( event )
+{
+	var target = event.target || event.srcElement;
+	var rect = target.getBoundingClientRect();
+	var points = [];
+	for ( var i=0; i<event.changedTouches.length; i++ )
+	{
+		var touch = event.changedTouches[i];
+		var offsetX = touch.clientX - rect.left;
+		var offsetY = touch.clientY - rect.top;
+		points.push( {x:offsetX, y:offsetY} );
+	}
+	return points;
 };
 
 GraphController.prototype._onKeyDown = function( event )
@@ -195,5 +219,52 @@ GraphController.prototype._onWheel = function( event )
 
 	this.update();
 	
+	event.preventDefault();
+};
+
+GraphController.prototype._onTouchStart = function( event )
+{
+	var canvasPoints = GraphController._getCanvasPointsFromTouchEvent( event );
+	if ( canvasPoints.length===0 )
+		return;
+
+	this._lastCanvasPoint = canvasPoints[0];
+
+	event.preventDefault();		// Preventing default on touch events prevent the "pull to refresh" feature on Chrome Android
+};
+
+GraphController.prototype._onTouchMove = function( event )
+{
+	if ( !this._lastCanvasPoint )
+		return;
+
+	var canvasPoints = GraphController._getCanvasPointsFromTouchEvent( event );
+	if ( canvasPoints.length===0 )
+		return;
+
+	var canvasPoint = canvasPoints[0];
+
+	var graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
+	graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
+
+	var lastGraphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( this._lastCanvasPoint, this._canvas );
+	lastGraphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( lastGraphDataPoint, this._graphDataWindow );
+
+	var deltaX = graphDataPoint.x - lastGraphDataPoint.x;
+	var deltaY = graphDataPoint.y - lastGraphDataPoint.y;
+	this._graphDataWindow.x -= deltaX;
+	this._graphDataWindow.y -= deltaY;
+
+	this._lastCanvasPoint = canvasPoint;
+
+	this.update();
+
+	event.preventDefault();
+};
+
+GraphController.prototype._onTouchEnd = function( event )
+{
+	this._lastCanvasPoint = null;
+
 	event.preventDefault();
 };
