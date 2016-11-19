@@ -47,20 +47,20 @@ GraphController.prototype.update = function()
 	GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow );
 };
 
-GraphController.prototype.zoom = function( zoomFactor, graphWindowPointCenter )
+GraphController.prototype.zoom = function( zoomFactor, graphWindowPoint )
 {
-	if ( !graphWindowPointCenter )
-		graphWindowPointCenter = {x:0.5, y:0.5};
+	if ( !graphWindowPoint )
+		graphWindowPoint = {x:0.5, y:0.5};
 	
-	var graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPointCenter, this._graphDataWindow );
+	var graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, this._graphDataWindow );
 
 	this._graphDataWindow.width *= zoomFactor;
 	this._graphDataWindow.height *= zoomFactor;
 
-	var graphWindowPointCenter2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPointCenter, this._graphDataWindow );
+	var graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, this._graphDataWindow );
 
-	this._graphDataWindow.x -= (graphWindowPointCenter2.x - graphDataPoint.x);
-	this._graphDataWindow.y -= (graphWindowPointCenter2.y - graphDataPoint.y);
+	this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
+	this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
 };
 
 GraphController._getCanvasPointFromEvent = function( event )
@@ -114,8 +114,7 @@ GraphController.prototype._onKeyDown = function( event )
 	{
 		this._graphDataWindow.y -= dy;
 	}
-	else if ( event.keyCode===187 ||		// +/=
-			  event.keyCode===189 )			// -/_
+	else if ( event.keyCode===187 ||  event.keyCode===189 )		// +/= and -/_
 	{
 		var zoomFactor = 1;
 		var k = 0.1;
@@ -127,25 +126,8 @@ GraphController.prototype._onKeyDown = function( event )
 		{
 			zoomFactor += k;
 		}
-
-		var graphDataPoint = {x:0.5, y:0.5};
-		graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
-
-		this._graphDataWindow.width *= zoomFactor;
-		this._graphDataWindow.height *= zoomFactor;
-
-		var graphDataPoint2 = {x:0.5, y:0.5};
-		graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint2, this._graphDataWindow );
-
-		this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
-		this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
+		this.zoom( zoomFactor );
 	}
-	else if ( event.keyCode===189 )			// -/_
-	{
-		this._graphDataWindow.width *= 1.1;
-		this._graphDataWindow.height *= 1.1;
-	}
-
 	this.update();
 };
 
@@ -160,7 +142,6 @@ GraphController.prototype._onMouseMove = function( event )
 		return;
 
 	var canvasPoint = GraphController._getCanvasPointFromEvent( event );
-
 	var graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
 	graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
 
@@ -197,9 +178,7 @@ GraphController.prototype._onWheel = function( event )
 		}
 
 		var canvasPoint = GraphController._getCanvasPointFromEvent( event );
-	
-		var	graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
-		graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
+		var	graphWindowPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
 		
 		var zoomFactor = 1.0;
 		var k = 0.001
@@ -213,14 +192,8 @@ GraphController.prototype._onWheel = function( event )
 		}
 		for ( var i=0; i<Math.abs(wheelDelta); ++i )
 		{
-			this._graphDataWindow.width *= zoomFactor;
-			this._graphDataWindow.height *= zoomFactor;
+			this.zoom( zoomFactor, graphWindowPoint );
 		}
-
-		var graphDataPoint2 = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
-		graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint2, this._graphDataWindow );
-		this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
-		this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
 	}
 	else
 	{
