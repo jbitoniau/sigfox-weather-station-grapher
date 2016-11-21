@@ -25,16 +25,16 @@ function createHTMLErrorResponse( res, code, message )
 	res.end();
 }
 
-function forwardApiCall( path, res )
+function forwardApiCall( path, query, res )
 {
-	console.log("Forwarding Sigfox REST api call: " + path);
-	
 	var options = {
 		hostname: 'backend.sigfox.com',
-		path: path,
-		auth: sigfoxBackendAuth,
+		path: path + '?' + query,
+		auth: sigfoxBackendAuth
 	};
 
+	console.log("Forwarding Sigfox REST api call: " + options.hostname + options.path );
+	
 	var callback = function(response) 
 		{
 			//console.log('statusCode:', response.statusCode);
@@ -91,9 +91,10 @@ var server = http.createServer(
 		//console.log("HTTP request: " + req.url );
 
 		var path = url.parse(req.url).pathname;
+		var query = url.parse(req.url).query; 
 		if ( path.indexOf('/api/')===0 )
 		{
-			forwardApiCall( path, res );
+			forwardApiCall( path, query, res );
 		}
 		else if ( path.indexOf('/files/')===0 )
 		{

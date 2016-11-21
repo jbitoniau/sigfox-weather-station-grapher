@@ -1,38 +1,29 @@
 'use strict';
 
-function Main()
+function GraphDataFetcher(graphData)
 {
-	var canvas = document.getElementById('graphCanvas');
-	canvas.focus();
-					
-	var graphData = [];
-	var graphDataWindow = {
-		x: -20,		
-		y: -5,
-		width: 500,
-		height: 50 
-	};
+	this._graphData = [];		// should be a public prop
+	this._xmin = null;
+	this._xmax = null;
+	this._promiseInProgress = null;
+}
 
-	var graphController = new GraphController( canvas, graphData, graphDataWindow );
-	graphController.update();
+GraphDataFetcher.prototype.fetchData = function( beforeTime )
+{
+	if ( this._promiseInProgress )
+	{
+		console.log("Fetching already in progress...");
+		return Promise.reject();
+	}
 
-	var zoomInButton = document.getElementById('graphZoomInButton');
-	zoomInButton.onclick = 
-		function( event ) 
-		{
-			graphController.zoom( 0.8 );
-			graphController.update();
-		};
+	var limit = 10;
+	var uri = '/api/devices/1D80C/messages?limit=' + limit;
+	if ( beforeTime!==null && beforeTime!==undefined )
+	{
+		uri += '&before=' + beforeTime;
+	}
 
-	var zoomOutButton = document.getElementById('graphZoomOutButton');
-	zoomOutButton.onclick = 
-		function( event ) 
-		{
-			graphController.zoom( 1.2 );
-			graphController.update();
-		};
-
-	HttpRequest.request( '/api/devices/1D80C/messages', 'GET')
+	var promise = HttpRequest.request( uri, 'GET')
 		.then(
 			function( response )
 			{
@@ -62,7 +53,7 @@ function Main()
 						return weatherData;
 					};
 
-
+	/// ------------
 				var messages = JSON.parse(response);
 				for ( var i=0; i<messages.data.length; ++i  )
 				{
@@ -75,20 +66,133 @@ function Main()
 					message.weatherData = weatherData;
 					message.date = date;
 				}
+	/// ------------
 
-				// Test displaying the data. We convert time in minutes and rebase it ot the first value (of the first page for now)
-				var t0 = messages.data[0].time;
+				var graphData = [];
 				for ( var i=0; i<messages.data.length; ++i  )
 				{
 					var message = messages.data[i];
-					graphData.push( {x:(message.time-t0) / 60, y:message.weatherData.temperature} );
+					graphData.push( {x:message.time, y:message.weatherData.temperature} );
 				}
-				
-				graphController
+
+				// Combine graph data we've just fetched with existing data
+				if ( graphData.length>0 )
+				{
+					var xmin = graphData[graphData.length-1].x;
+					var xmax = graphData[0].x;
+
+					if ( this._graphData.length===0 )
+					{
+						// http://stackoverflow.com/questions/16232915/copying-an-array-of-objects-into-another-array-in-javascript
+						this._graphData.push.apply(this._graphData, graphData);
+						this._xmin = xmin;
+						this._xmax = xmax;
+					}
+					else
+					{
+						// Very naive and incomplete!!!
+						for ( var i=0; i<graphData.length; i++ )
+						{
+							if ( graphData[i].x<this._xmin )
+							{
+								this._graphData.push( graphData[i] );
+							}
+							this._xmin = this._graphData[this._graphData.length-1].x;
+						}
+					}
+				}
+
+				this._promiseInProgress = null;
+
+				return Promise.resolve();
+			}.bind(this))
+		.catch(
+			function( error )
+			{
+				this._promiseInProgress = null;
+				throw error;
+			});
+
+	this._promiseInProgress = promise;
+	return promise;
+};
+
+function Main()
+{
+	var graphDataFetcher = new GraphDataFetcher();
+	
+	var canvas = document.getElementById('graphCanvas');
+	canvas.focus();
+
+	var graphData = graphDataFetcher._graphData;
+
+	var graphDataWindow = {
+		x: 0,		// 1st of January 1970! 
+		y: -5,
+		width: 10 * (10*60),
+		height: 60 
+	};
+
+	var graphController = new GraphController( canvas, graphData, graphDataWindow );
+	graphController.update();
+
+	var zoomInButton = document.getElementById('graphZoomInButton');
+	zoomInButton.onclick = 
+		function( event ) 
+		{
+			graphController.zoom( 0.8 );
+			graphController.update();
+		};
+
+	var zoomOutButton = document.getElementById('graphZoomOutButton');
+	zoomOutButton.onclick = 
+		function( event ) 
+		{
+			graphController.zoom( 1.2 );
+			graphController.update();
+		};
+
+	var promise = graphDataFetcher.fetchData()
+		.then(
+			function()
+			{
+				if ( graphData.length>0 )
+				{
+					graphDataWindow.x = graphData[0].x - 5 *10*60;
+				}
+				graphController.update();
 			})
 		.catch(
 			function( error )
 			{
 				alert( error.toString() );
 			});
+
+	graphController._onGraphDataWindowChange = function()
+		{
+			var xminData = graphDataFetcher._xmin;
+			if ( xminData===null )
+				return;
+
+			var xminWindow = graphDataWindow.x + graphDataWindow.width/2;
+			if ( xminWindow<xminData )
+			{
+				console.log('need loading');	
+				if ( !graphDataFetcher._promiseInProgress )
+				{		
+					graphDataFetcher.fetchData(xminData).then(
+						function()
+						{
+							graphController.update();
+						})
+					.catch(
+						function( error )
+						{
+							alert( error.toString() );
+						});
+				}
+			}
+		};
+
+
 }

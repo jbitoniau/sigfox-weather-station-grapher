@@ -28,6 +28,8 @@ function GraphController( canvas, graphData, graphDataWindow )
 	this._canvas.addEventListener( 'touchend', this._onTouchEndHandler );
 
 	this._lastCanvasPoint = null;
+
+	this._onGraphDataWindowChange = null;
 }
 
 GraphController.prototype.dispose = function()
@@ -61,6 +63,11 @@ GraphController.prototype.zoom = function( zoomFactor, graphWindowPoint )
 
 	this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
 	this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
+
+	if ( this._onGraphDataWindowChange )
+	{
+		this._onGraphDataWindowChange();
+	}
 };
 
 GraphController._getCanvasPointFromEvent = function( event )
@@ -98,21 +105,26 @@ GraphController.prototype._onKeyDown = function( event )
 	var dx = (c1.x - c0.x) * s;
 	var dy = (c1.y - c0.y) * s;
 
+	var windowChanged = false;
 	if ( event.keyCode===37 )				// left arrow
 	{
 		this._graphDataWindow.x -= dx;
+		windowChanged = true;
 	}
 	else if ( event.keyCode===39 )			// right arrow
 	{
 		this._graphDataWindow.x += dx;
+		windowChanged = true;
 	}
 	else if ( event.keyCode===38 )			// up arrow
 	{
 		this._graphDataWindow.y += dy;
+		windowChanged = true;
 	}
 	else if ( event.keyCode===40 )			// down arrow
 	{
 		this._graphDataWindow.y -= dy;
+		windowChanged = true;
 	}
 	else if ( event.keyCode===187 ||  event.keyCode===189 )		// +/= and -/_
 	{
@@ -127,8 +139,17 @@ GraphController.prototype._onKeyDown = function( event )
 			zoomFactor += k;
 		}
 		this.zoom( zoomFactor );
+		this.windowChanged = true;
 	}
-	this.update();
+	
+	if ( this.windowChanged )
+	{
+		this.update();
+		if ( this._onGraphDataWindowChange )
+		{
+			this._onGraphDataWindowChange();
+		}
+	}
 };
 
 GraphController.prototype._onMouseDown = function( event )
@@ -156,6 +177,10 @@ GraphController.prototype._onMouseMove = function( event )
 	this._lastCanvasPoint = canvasPoint;
 
 	this.update();
+	if ( this._onGraphDataWindowChange )
+	{
+		this._onGraphDataWindowChange();
+	}
 };
 
 GraphController.prototype._onMouseUp = function( event )
@@ -194,6 +219,8 @@ GraphController.prototype._onWheel = function( event )
 		{
 			this.zoom( zoomFactor, graphWindowPoint );
 		}
+
+
 	}
 	else
 	{
@@ -207,7 +234,12 @@ GraphController.prototype._onWheel = function( event )
 	}
 
 	this.update();
-	
+		
+	if ( this._onGraphDataWindowChange )
+	{
+		this._onGraphDataWindowChange();
+	}
+
 	event.preventDefault();
 };
 
@@ -247,6 +279,11 @@ GraphController.prototype._onTouchMove = function( event )
 	this._lastCanvasPoint = canvasPoint;
 
 	this.update();
+
+	if ( this._onGraphDataWindowChange )
+	{
+		this._onGraphDataWindowChange();
+	}
 
 	event.preventDefault();
 };
