@@ -49,15 +49,21 @@ GraphController.prototype.update = function()
 	GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow );
 };
 
-GraphController.prototype.zoom = function( zoomFactor, graphWindowPoint )
+GraphController.prototype.zoom = function( zoomFactor, graphWindowPoint, axes )
 {
 	if ( !graphWindowPoint )
 		graphWindowPoint = {x:0.5, y:0.5};
 	
 	var graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, this._graphDataWindow );
 
-	this._graphDataWindow.width *= zoomFactor;
-	this._graphDataWindow.height *= zoomFactor;
+	if ( !axes )
+		axes = 'xy';
+
+	if ( axes.indexOf('x')!==-1 )
+		this._graphDataWindow.width *= zoomFactor;
+
+	if ( axes.indexOf('y')!==-1 )
+		this._graphDataWindow.height *= zoomFactor;
 
 	var graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, this._graphDataWindow );
 
@@ -215,12 +221,17 @@ GraphController.prototype._onWheel = function( event )
 		{
 			zoomFactor -= k;
 		}
+
+		var axes = 'x';
+		if ( event.shiftKey )
+		{
+			axes = 'y';
+		}
+		
 		for ( var i=0; i<Math.abs(wheelDelta); ++i )
 		{
-			this.zoom( zoomFactor, graphWindowPoint );
+			this.zoom( zoomFactor, graphWindowPoint, axes );
 		}
-
-
 	}
 	else
 	{
