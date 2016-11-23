@@ -136,7 +136,7 @@ function Main()
 			{
 				var numMilliseconds = x * 1000;
 				var date = new Date(numMilliseconds);
-				var text = date.getDate() + '/' + date.getMonth() + ' ' + date.getHours() + ':' + date.getMinutes();
+				var text = date.getHours() + ':' + date.getMinutes() + ' ' + date.getDate() + '/' + date.getMonth();
 				return text;
 			}
 	};
