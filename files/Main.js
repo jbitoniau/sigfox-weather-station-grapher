@@ -130,7 +130,15 @@ function Main()
 		x: 0,		// 1st of January 1970! 
 		y: -5,
 		width: 10 * (10*60),
-		height: 60 
+		height: 60,
+		xToString: 
+			function(x)
+			{
+				var numMilliseconds = x * 1000;
+				var date = new Date(numMilliseconds);
+				var text = date.getDate() + '/' + date.getMonth() + ' ' + date.getHours() + ':' + date.getMinutes();
+				return text;
+			}
 	};
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow );

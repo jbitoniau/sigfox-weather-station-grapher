@@ -28,6 +28,7 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow )
 	var yspacing = Math.pow( 10, Math.floor( Math.log10(dy) ) );   // in graph data unit
 	var y0 = Math.floor( c0.y / yspacing ) * yspacing;
 	var y1 = Math.floor( c1.y / yspacing ) * yspacing;
+	var yToString = graphDataWindow.yToString;
 	for ( var y=y0; y<=y1; y+=yspacing )
 	{
 		context.beginPath();
@@ -37,6 +38,8 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow )
 		context.lineTo(canvasWidth, canvasPoint.y);
 		context.stroke();
 		var text = y;
+		if ( yToString )
+			text = yToString(y);
 		context.fillText(text, canvasWidth-context.measureText(text).width-5, canvasPoint.y-5);
 	}
 
@@ -44,6 +47,7 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow )
 	var xspacing = Math.pow( 10, Math.floor( Math.log10(dx) ) );   // in graph data unit
 	var x0 = Math.floor( c0.x / xspacing ) * xspacing;
 	var x1 = Math.floor( c1.x / xspacing ) * xspacing;
+	var xToString = graphDataWindow.xToString;
 	for ( var x=x0; x<=x1; x+=xspacing )
 	{
 		context.beginPath();
@@ -53,6 +57,8 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow )
 		context.lineTo(canvasPoint.x, canvasHeight);
 		context.stroke();
 		var text = x;
+		if ( xToString )
+			text = xToString(x);
 		context.fillText(text, canvasPoint.x+5, textSize+2);
 	}
 
