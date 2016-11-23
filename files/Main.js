@@ -16,7 +16,7 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 		return Promise.reject();
 	}
 
-	var limit = 10;
+	var limit = 100;
 	var uri = '/api/devices/1D80C/messages?limit=' + limit;
 	if ( beforeTime!==null && beforeTime!==undefined )
 	{
@@ -183,8 +183,7 @@ function Main()
 			if ( xminData===null )
 				return Promise.resolve();
 
-			var xminWindow = graphDataWindow.x + graphDataWindow.width/2;
-			if ( xminWindow<xminData )
+			if ( graphDataWindow.x<xminData )
 			{
 				if ( !graphDataFetcher._promiseInProgress )
 				{		
