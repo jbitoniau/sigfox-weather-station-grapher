@@ -164,6 +164,7 @@ function Main()
 		.then(
 			function()
 			{
+				// Move graph window to last data point if there's any data at all
 				if ( graphData.length>0 )
 				{
 					graphDataWindow.x = graphData[0].x - 5 *10*60;
@@ -176,31 +177,38 @@ function Main()
 				alert( error.toString() );
 			});
 
-	graphController._onGraphDataWindowChange = function()
+	var fetchDataIfNeeded = function()
 		{
 			var xminData = graphDataFetcher._xmin;
 			if ( xminData===null )
-				return;
+				return Promise.resolve();
 
 			var xminWindow = graphDataWindow.x + graphDataWindow.width/2;
 			if ( xminWindow<xminData )
 			{
-				console.log('need loading');	
 				if ( !graphDataFetcher._promiseInProgress )
 				{		
-					graphDataFetcher.fetchData(xminData).then(
-						function()
-						{
-							graphController.update();
-						})
-					.catch(
-						function( error )
-						{
-							alert( error.toString() );
-						});
+					var promise = graphDataFetcher.fetchData(xminData)
+						.then(
+							function()
+							{
+								graphController.update();
+								return fetchDataIfNeeded();
+							})
+						.catch(
+							function( error )
+							{
+								alert( error.toString() );
+							});
+
+					return promise;
 				}
 			}
+			return Promise.resolve();
 		};
 
-
+	graphController._onGraphDataWindowChange = function()
+		{
+			fetchDataIfNeeded();
+		};
 }
