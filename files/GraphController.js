@@ -3,11 +3,12 @@
 /*
 	GraphController
 */
-function GraphController( canvas, graphData, graphDataWindow ) 
+function GraphController( canvas, graphData, graphDataWindow, graphOptions ) 
 {	
 	this._canvas = canvas;
 	this._graphData = graphData;
 	this._graphDataWindow = graphDataWindow;
+	this._graphOptions = graphOptions;
 
 	this._onKeyDownHandler = this._onKeyDown.bind(this);
 	this._onMouseDownHandler = this._onMouseDown.bind(this);
@@ -46,7 +47,7 @@ GraphController.prototype.dispose = function()
 
 GraphController.prototype.update = function()
 {
-	GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow );
+	GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow, this._graphOptions );
 };
 
 GraphController.prototype.zoom = function( zoomFactor, graphWindowPoint, axes )

@@ -129,26 +129,47 @@ function Main()
 	var graphDataWindow = {
 		x: 0,		// 1st of January 1970! 
 		y: -5,
-		width: 10 * (10*60),
-		height: 60,
-		xToString: 
-			function(x)
-			{
-				var numMilliseconds = x * 1000;
-				var date = new Date(numMilliseconds);
-				var text = date.getHours() + ':' + date.getMinutes() + ' ' + date.getDate() + '/' + date.getMonth();
-				return text;
-			}
+		width: 100 * (10*60),
+		height: 60
 	};
 
-	var graphController = new GraphController( canvas, graphData, graphDataWindow );
+	var graphOptions = {
+	};
+
+/*
+	///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
+	var pad = function(n, width, z) {
+	  z = z || '0';
+	  n = n + '';
+	  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+	};
+
+	xToString: 
+	function(x)
+	{
+		var numMilliseconds = x * 1000;
+		var date = new Date(numMilliseconds);
+		
+		var hour = pad( date.getUTCHours(), 2 );
+		var minute = pad( date.getUTCMinutes(), 2);
+		var second = pad( date.getUTCSeconds(), 2);
+
+		var day = pad( date.getUTCDate(), 2);			// UTC date starts at 1
+		var month = pad( date.getUTCMonth()+1, 2);		// UTC month starts at 0 for January
+		var year = pad( date.getFullYear(), 4);
+
+		var text = hour + ':' + minute + '.' + second + ' ' + day + '/' + month + '/' + year;
+		return text;
+	}*/
+
+	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
 	graphController.update();
 
 	var zoomInButton = document.getElementById('graphZoomInButton');
 	zoomInButton.onclick = 
 		function( event ) 
 		{
-			graphController.zoom( 0.8 );
+			graphController.zoom( 0.8, null, 'x' );
 			graphController.update();
 		};
 
@@ -156,7 +177,7 @@ function Main()
 	zoomOutButton.onclick = 
 		function( event ) 
 		{
-			graphController.zoom( 1.2 );
+			graphController.zoom( 1.2, null, 'x' );
 			graphController.update();
 		};
 
@@ -167,7 +188,7 @@ function Main()
 				// Move graph window to last data point if there's any data at all
 				if ( graphData.length>0 )
 				{
-					graphDataWindow.x = graphData[0].x - 5 *10*60;
+					graphDataWindow.x = graphData[0].x - 90 *10*60;
 				}
 				graphController.update();
 			})
