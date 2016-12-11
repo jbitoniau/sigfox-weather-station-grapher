@@ -263,6 +263,20 @@ var monthNames = ['January','February','March','April','May','June','July','Augu
 			return text;
 		};
 
+// // http://www.epochconverter.com/weeknumbers
+//http://techblog.procurios.nl/k/news/view/33796/14863/calculate-iso-8601-week-and-year-in-javascript.html
+// Date.prototype.getWeek = function () {
+//     var target  = new Date(this.valueOf());
+//     var dayNr   = (this.getDay() + 6) % 7;
+//     target.setDate(target.getDate() - dayNr + 3);
+//     var firstThursday = target.valueOf();
+//     target.setMonth(0, 1);
+//     if (target.getDay() != 4) {
+//         target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+//     }
+//     return 1 + Math.ceil((firstThursday - target) / 604800000);
+// }
+
 	var spacings = [
 		{spacing:60, getText:fullTimeText},						// 1 minute
 		{spacing:10*60, getText:fullTimeText},					// 10 minutes
@@ -291,20 +305,54 @@ var monthNames = ['January','February','March','April','May','June','July','Augu
 // In graph data unit
 GraphDataPresenter.getLinesSpacing = function( value0, value1, numMaxLines )	
 {
+	numMaxLines = Math.floor(numMaxLines);
+	if ( numMaxLines<=0 )
+		return null;
+
 	var delta = value1 - value0;
-	var originalSpacing = Math.pow( 10, Math.floor( Math.log10(delta) ) );   
-return originalSpacing;
-	
-	var spacingDividors = [1, 2, 5];
-	var spacing = null;
-	for ( var i=0; i<spacingDividors.length; ++i )
+
+	var p = Math.floor( Math.log10(delta) );
+	var spacing = Math.pow( 10, p );
+	var numLines = Math.floor(delta/spacing);
+
+	var subdivs = [1, 2, 5];
+	if ( numLines>numMaxLines )
 	{
-		var dividor = spacingDividors[i];
-		spacing = originalSpacing/dividor;
-		var numLines = delta/spacing;
-		if ( numLines<=numMaxLines )
+		// There are more lines than maximum allowed, we increase the spacing until we comply with maximum
+		while ( true )
 		{
-			break;
+			for ( var i=0; i<subdivs.length; i++ )
+			{
+				spacing = Math.pow( 10, p ) * subdivs[i];
+				numLines = Math.floor(delta/spacing);
+				if ( numLines<numMaxLines )
+				{
+					return spacing;
+				}
+			}
+			p++;
+		}
+	}
+	else
+	{
+		// There are more lines than maximum allowed, but there could there be a smaller spacing bring 
+		// us closer to maximum without exceeding it. We try decreasing spacing until getting past the maximum
+		while ( true )
+		{
+			for ( var i=0; i<subdivs.length; i++ )
+			{
+				var spacingToTest = Math.pow( 10, p ) / subdivs[i];
+				numLines = Math.floor(delta/spacingToTest);
+				if ( numLines>=numMaxLines )
+				{
+					return spacing;
+				}
+				else
+				{
+					spacing = spacingToTest;
+				}
+			}
+			p--;
 		}
 	}
 	return spacing;
@@ -325,7 +373,7 @@ GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getL
 	
 	var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, graphDataWindow );
 	var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, graphDataWindow );
-	var numMaxLines = 6;
+	var numMaxLines = 5;
 
 	var yspacing = getLinesSpacing( c0.y, c1.y, numMaxLines );		// Need to enfore numMaxLines
 	var y0 = Math.floor( c0.y / yspacing ) * yspacing;
