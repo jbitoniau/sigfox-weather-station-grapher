@@ -49,7 +49,6 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	}
 	
 	// Data 
-	context.beginPath();
 	context.strokeStyle="#666666";
 	context.fillStyle="#444444";
 	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData );
@@ -98,6 +97,7 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 	if ( n>250 )
 		showPoints = false;
 
+	context.beginPath();
 	for ( var i=i0; i<=i1; i++ )
 	{
 		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
