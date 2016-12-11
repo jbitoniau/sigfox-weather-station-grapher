@@ -301,60 +301,65 @@ var monthNames = ['January','February','March','April','May','June','July','Augu
 	return null;
 };
 
-
-// In graph data unit
-GraphDataPresenter.getLinesSpacing = function( value0, value1, numMaxLines )	
+GraphDataPresenter.getBestPowerOfTenSubdivision = function( valueRange, numMaxLines, subdivs )	
 {
 	numMaxLines = Math.floor(numMaxLines);
 	if ( numMaxLines<=0 )
 		return null;
 
-	var delta = value1 - value0;
-
-	var p = Math.floor( Math.log10(delta) );
+	// Find the power of 10 subdivision that produces a number of lines right under the maximum allowed
+	var p = Math.floor( Math.log10(valueRange) );
 	var spacing = Math.pow( 10, p );
-	var numLines = Math.floor(delta/spacing);
+	var numLines = Math.floor(valueRange/spacing);
+	while ( numLines<=numMaxLines )
+	{
+		p--;
+		spacing = Math.pow( 10, p );
+		numLines = Math.floor(valueRange/spacing);
+	}
 
-	var subdivs = [1, 2, 5];
-	if ( numLines>numMaxLines )
+	while ( numLines>numMaxLines )
 	{
-		// There are more lines than maximum allowed, we increase the spacing until we comply with maximum
-		while ( true )
+		p++;
+		spacing = Math.pow( 10, p );
+		numLines = Math.floor(valueRange/spacing);
+	}
+
+	// Go through the alternative subdivisions of power of 10 and and check whether there's one 
+	// that gives a larger number of lines but still without exceeding the maximum
+	var subdivIndex  = null;
+	for ( var i=0; i<subdivs.length; i++ )
+	{
+		spacing = Math.pow( 10, p ) * subdivs[i];
+		var numLines = Math.floor(valueRange/spacing);
+		if ( numLines<=numMaxLines )
 		{
-			for ( var i=0; i<subdivs.length; i++ )
-			{
-				spacing = Math.pow( 10, p ) * subdivs[i];
-				numLines = Math.floor(delta/spacing);
-				if ( numLines<numMaxLines )
-				{
-					return spacing;
-				}
-			}
-			p++;
+			subdivIndex = i;
+		}
+		else
+		{
+			break;
 		}
 	}
-	else
-	{
-		// There are more lines than maximum allowed, but there could there be a smaller spacing bring 
-		// us closer to maximum without exceeding it. We try decreasing spacing until getting past the maximum
-		while ( true )
-		{
-			for ( var i=0; i<subdivs.length; i++ )
-			{
-				var spacingToTest = Math.pow( 10, p ) / subdivs[i];
-				numLines = Math.floor(delta/spacingToTest);
-				if ( numLines>=numMaxLines )
-				{
-					return spacing;
-				}
-				else
-				{
-					spacing = spacingToTest;
-				}
-			}
-			p--;
-		}
-	}
+
+	var result = {
+		powerOfTen: p,
+		subdivIndex: subdivIndex
+	};
+
+	return result;
+};
+
+GraphDataPresenter.getLinesSpacing = function( value0, value1, numMaxLines )
+{
+	var valueRange = value1-value0;
+	var subdivs = [0.5, 0.2];			// Must be <1 and >0.1 (as dividing by 10 is taken care of above)
+	var r = GraphDataPresenter.getBestPowerOfTenSubdivision( valueRange, numMaxLines, subdivs );
+
+	var subDiv = 1;
+	if ( r.subdivIndex!==null )
+		subDiv = subdivs[r.subdivIndex];
+	var spacing = Math.pow( 10, r.powerOfTen ) * subDiv;
 	return spacing;
 };
 
