@@ -18,17 +18,17 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 
 	// Secondary grid lines
 	context.strokeStyle = "#DDDDDD";
-	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, GraphDataPresenter.getSecondaryLinesSpacing, null, 5 );
-	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, GraphDataPresenter.getSecondaryLinesSpacingForTime, null, 7 );
-
+	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, 7 );
+	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingY, null, 5 );
+	
 	// Primary grid lines
 	var textSize = 14; 
 	context.strokeStyle = "#AAAAAA";
 	context.font = textSize + "px sans-serif";
 	context.fillStyle="#888888";
-	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, GraphDataPresenter.getLinesSpacing, GraphDataPresenter.getLinesText, 5 );
-	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, GraphDataPresenter.getPrimaryLinesSpacingForTime, GraphDataPresenter.getLinesTextForTime, 7 );
-
+	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingX, graphOptions.getPrimaryLinesTextX, 7 );
+	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingY, graphOptions.getPrimaryLinesTextY, 5 );
+	
 	// Origin axes
 	context.strokeStyle="#222222";
 	var originwp = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:0}, graphDataWindow );
@@ -336,6 +336,9 @@ GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getL
 	var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, graphDataWindow );
 
 	var yspacing = getLinesSpacing( c0.y, c1.y, numMaxLines );		// Need to enfore numMaxLines
+	if ( !yspacing )
+		return;
+
 	var y0 = Math.floor( c0.y / yspacing ) * yspacing;
 	var y1 = Math.floor( c1.y / yspacing ) * yspacing;
 	for ( var y=y0; y<=y1; y+=yspacing )
@@ -349,7 +352,10 @@ GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getL
 		if ( getLinesText )
 		{
 			var text = getLinesText(y, yspacing);
-			context.fillText(text, canvasWidth-context.measureText(text).width-5, canvasPoint.y-2);
+			if ( text )
+			{
+				context.fillText(text, canvasWidth-context.measureText(text).width-5, canvasPoint.y-2);
+			}
 		}
 	}
 }
@@ -366,6 +372,9 @@ GraphDataPresenter.drawLinesX = function( context, canvas, graphDataWindow, getL
 	var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, graphDataWindow );
 
 	var xspacing = getLinesSpacing( c0.x, c1.x, numMaxLines );		// Need to enfore numMaxLines
+	if ( !xspacing )
+		return;
+	
 	var x0 = Math.floor( c0.x / xspacing ) * xspacing;
 	var x1 = Math.floor( c1.x / xspacing ) * xspacing;
 	for ( var x=x0; x<=x1; x+=xspacing )
@@ -379,7 +388,10 @@ GraphDataPresenter.drawLinesX = function( context, canvas, graphDataWindow, getL
 		if ( getLinesText )
 		{
 			var text = getLinesText(x, xspacing);
-			context.fillText(text, canvasPoint.x+2, canvasHeight-5);
+			if ( text )
+			{
+				context.fillText(text, canvasPoint.x+2, canvasHeight-5);
+			}
 		}
 	}
 }

@@ -134,33 +134,14 @@ function Main()
 	};
 
 	var graphOptions = {
-	};
-
-/*
-	///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
-	var pad = function(n, width, z) {
-	  z = z || '0';
-	  n = n + '';
-	  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-	};
-
-	xToString: 
-	function(x)
-	{
-		var numMilliseconds = x * 1000;
-		var date = new Date(numMilliseconds);
+		getPrimaryLinesTextX: GraphDataPresenter.getLinesTextForTime, 
+		getPrimaryLinesSpacingX: GraphDataPresenter.getPrimaryLinesSpacingForTime,
+		getSecondaryLinesSpacingX: GraphDataPresenter.getSecondaryLinesSpacingForTime,
 		
-		var hour = pad( date.getUTCHours(), 2 );
-		var minute = pad( date.getUTCMinutes(), 2);
-		var second = pad( date.getUTCSeconds(), 2);
-
-		var day = pad( date.getUTCDate(), 2);			// UTC date starts at 1
-		var month = pad( date.getUTCMonth()+1, 2);		// UTC month starts at 0 for January
-		var year = pad( date.getFullYear(), 4);
-
-		var text = hour + ':' + minute + '.' + second + ' ' + day + '/' + month + '/' + year;
-		return text;
-	}*/
+		getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
+		getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
+		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing,
+	};
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
 	graphController.update();
