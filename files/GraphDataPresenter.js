@@ -18,13 +18,7 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 
 	// Secondary grid lines
 	context.strokeStyle = "#DDDDDD";
-	var getLinesSpacing2 = function( value0, value1, numMaxLines )
-	{
-		var spacing = GraphDataPresenter.getLinesSpacing( value0, value1, numMaxLines );
-		spacing /= 2;
-		return spacing;
-	} 
-	//GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, getLinesSpacing2, null);
+	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, GraphDataPresenter.getSecondaryLinesSpacing, null );
 	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, GraphDataPresenter.getSecondaryLinesSpacingForTime, null);
 
 	// Primary grid lines
@@ -33,7 +27,7 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	context.font = textSize + "px sans-serif";
 	context.fillStyle="#888888";
 	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, GraphDataPresenter.getLinesSpacing, GraphDataPresenter.getLinesText );
-	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, GraphDataPresenter.getPrimaryLinesSpacingForTime, GraphDataPresenter.getLinesTextForTime );
+//	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, GraphDataPresenter.getPrimaryLinesSpacingForTime, GraphDataPresenter.getLinesTextForTime );
 
 	// Origin axes
 	context.strokeStyle="#222222";
@@ -70,70 +64,6 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	}
 	context.stroke();
 };
-
-/*	
-
-// //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/log
-// /*var getBaseLog = function(base, value) {		
-//     return Math.log(value) / Math.log(base);
-// }
-// var yspacing2 = Math.pow( 5, Math.floor( getBaseLog(5, dy) ) );   
-// var k = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:c0.y+yspacing}, graphDataWindow );
-// var k2 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:c0.y+yspacing2}, graphDataWindow );
-// var n1 = 1/k.y;
-// var n2 = 1/k2.y;
-// if ( Math.abs(n2-5) <= Math.abs(n1-5) )
-// {
-// 	yspacing = yspacing2;
-// }
-// var yspacingOriginal = yspacing;
-// var k = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:c0.y+yspacing}, graphDataWindow );
-// var n = 1/k.y;		// numlines in window
-// console.log("n=" + n);
-// if ( n<5 )
-// {
-// 	yspacing = yspacingOriginal /2;
-// 	k = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:c0.y+yspacing}, graphDataWindow );
-// 	n = 1/k.y;		// numlines in window
-
-// 	if ( n<5 )
-// 	{
-// 		yspacing = yspacingOriginal /5;
-// 		k = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:c0.y+yspacing}, graphDataWindow );
-// 		n = 1/k.y;		// numlines in window
-// 	}
-// }
-
-
-	var steps = [
-		60,				// 1 minute
-		10*60,			// 10 minutes
-		60*60,			// 1 hour
-		6*60*60,		// 6 hour
-		12*60*60,		// half a day
-		24*60*60,		// 1 day
-		7*24*60*60,		// 1 week
-		(365.25/12)*24*60*60, // An average month, taking into account leap years
-		365.25*24*60*60 // An average month, taking into account leap years 
-	];
-
-	var xspacing = 0;
-	for ( var i=0; i<steps.length; ++i )
-	{
-		var step = steps[i];
-		var k = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:c0.x+step, y:0}, graphDataWindow );
-		var n = 1/k.x;		// numlines in window
-		if ( n<=5 )
-		{
-			xspacing = step;
-			break;
-		}
-	}
-	if ( xspacing===0 )
-	{
-		xspacing = steps[steps.length-1];
-	}
-*/
 
 GraphDataPresenter.getPrimaryLinesSpacingForTime = function( value0, value1, numMaxLines )	
 {
@@ -363,6 +293,41 @@ GraphDataPresenter.getLinesSpacing = function( value0, value1, numMaxLines )
 	return spacing;
 };
 
+GraphDataPresenter.getSecondaryLinesSpacing = function( value0, value1, numMaxLines )
+{
+	var valueRange = value1-value0;
+	var subdivs = [0.5, 0.2];			// Must be <1 and >0.1 (as dividing by 10 is taken care of above)
+	var r = GraphDataPresenter.getBestPowerOfTenSubdivision( valueRange, numMaxLines, subdivs );
+		
+	// This works pretty well as secondary lines are always a nice power of 10
+	var p = r.powerOfTen - 1;
+	var spacing = Math.pow( 10, p );
+
+	// This is an alternative version, a bit more complicated and not that nice
+	/*var p = r.powerOfTen;
+	var si = r.subdivIndex;
+	if ( si===null )
+	{
+		si = 0;
+	}
+	else 
+	{
+		si++;
+		if ( si===subdivs.length ) 
+		{
+			si = null
+			p--;
+		}
+	}
+
+	var subDiv = 1;
+	if ( si!==null )
+		subDiv = subdivs[si];
+	var spacing = Math.pow( 10, p ) * subDiv;*/
+
+	return spacing;
+};
+
 GraphDataPresenter.getLinesText = function( value, spacing )
 {
 	return value;
@@ -378,7 +343,7 @@ GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getL
 	
 	var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, graphDataWindow );
 	var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, graphDataWindow );
-	var numMaxLines = 5;
+	var numMaxLines = 4;
 
 	var yspacing = getLinesSpacing( c0.y, c1.y, numMaxLines );		// Need to enfore numMaxLines
 	var y0 = Math.floor( c0.y / yspacing ) * yspacing;
