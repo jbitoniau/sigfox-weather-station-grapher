@@ -52,18 +52,57 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	context.beginPath();
 	context.strokeStyle="#666666";
 	context.fillStyle="#444444";
+	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData );
+};
+
+
+GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData )
+{
+	if ( graphData.length===0 )
+		return;
+
+	var i0 = null;		// Most recent, higher X value
 	for ( var i=0; i<graphData.length; i++ )
 	{
 		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
 		if ( GraphDataPresenter.isInUnitSquare(windowPoint) )
 		{
-			var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
-			context.lineTo(canvasPoint.x, canvasPoint.y);
-			context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
+			i0 = i;
+			break;
 		}
+	}
+	if ( i0===null )
+		return;
+
+	var i1 = null;
+	for ( var i=graphData.length-1; i>=0; i-- )
+	{
+		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+		if ( GraphDataPresenter.isInUnitSquare(windowPoint) )
+		{
+			i1 = i;
+			break;
+		}
+	}
+	if ( i1===null )
+		return null;
+
+	if ( i0!==0 )
+		i0--;
+	if ( i1!==graphData.length-1 )
+		i1++;
+	//console.log( i0 + " to " + i1);
+
+	for ( var i=i0; i<=i1; i++ )
+	{
+		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+		var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
+		context.lineTo(canvasPoint.x, canvasPoint.y);
+		context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
 	}
 	context.stroke();
 };
+
 
 ///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
 GraphDataPresenter.pad = function(n, width, z) 
