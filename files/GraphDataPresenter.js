@@ -92,21 +92,31 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 		i1++;
 	//console.log( i0 + " to " + i1);
 
-	var n = i1-i0+1;
-	var showPoints = true;
-	if ( n>250 )
-		showPoints = false;
-
 	context.beginPath();
 	for ( var i=i0; i<=i1; i++ )
 	{
 		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
 		var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
 		context.lineTo(canvasPoint.x, canvasPoint.y);
-		if ( showPoints )
-			context.fillRect(canvasPoint.x-2, canvasPoint.y-2, 4, 4);
 	}
 	context.stroke();
+
+	var pointSize = 0;
+	var n = i1-i0+1;
+	if ( n<100 )
+		pointSize = 4;
+	else if ( n<200 )
+		pointSize = 2;
+
+	if ( pointSize>0 )
+	{
+		for ( var i=i0; i<=i1; i++ )
+		{
+			var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+			var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
+			context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
+		}
+	}
 };
 
 
