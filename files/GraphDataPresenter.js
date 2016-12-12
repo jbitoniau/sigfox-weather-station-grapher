@@ -1,5 +1,51 @@
 'use strict';
 
+
+function Segment( x0, x1 )
+{
+	this.x0 = x0<=x1 ? x0 : x1;
+	this.x1 = x0<=x1 ? x1 : x0;
+
+	if ( x1<x0 )
+		console.warn( "segment x0 and x1 ordering is wrong");
+}
+
+Segment.prototype.clone = function()
+{
+	return new Segment( this.x0, this.x1 );
+};
+
+Segment.prototype.subtract = function( otherSegment )
+{
+	if ( otherSegment.x1<this.x0 || otherSegment.x0>this.x1 )
+	{
+		// Other segment is outside of this one, on its left or its right
+		return [this.clone()];
+	}
+
+	var segments = [];
+	if ( otherSegment.x0>this.x0 )
+	{
+		segments.push( new Segment(this.x0, otherSegment.x0) );
+	}
+
+	if ( otherSegment.x1<this.x1 )
+	{
+		segments.push( new Segment(otherSegment.x1, this.x1) );
+	}
+	return segments;
+};
+
+Segment.prototype.intersect = function( segment )
+{
+	return [];
+};
+
+Segment.prototype.unite = function( segment )
+{
+	return [];
+};
+
 /*
 	GraphDataPresenter
 */
@@ -15,6 +61,10 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	var canvasWidth = canvas.width;
 	var canvasHeight = canvas.height;
 	var context = canvas.getContext("2d");
+
+	// Areas representing graph data and nothingness
+	context.fillStyle = '#EEEEFF';
+	GraphDataPresenter.drawGraphDataRange( context, canvas, graphDataWindow, graphData );
 
 	// Secondary grid lines
 	context.strokeStyle = "#DDDDDD";
@@ -54,6 +104,32 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData );
 };
 
+GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWindow, graphData )
+{
+	if ( graphData.length===0 )
+	{
+		context.fillRect( 0, 0, canvas.width, canvas.height );
+		return;
+	}
+
+	// All these x values are in graph data window space
+	var dataPointMinX = graphData[graphData.length-1];
+	var dataPointMaxX = graphData[0];
+	var dataMinX = GraphDataPresenter.graphDataPointToGraphWindowPoint( dataPointMinX, graphDataWindow ).x;			
+	var dataMaxX = GraphDataPresenter.graphDataPointToGraphWindowPoint( dataPointMaxX, graphDataWindow ).x;			
+	var dataSeg = new Segment(dataMinX, dataMaxX);
+
+	var winSeg = new Segment(0, 1);
+
+	var outerSegs = winSeg.subtract(dataSeg);
+	for ( var i=0; i<outerSegs.length; ++i )
+	{
+		var seg = outerSegs[i];
+		var pt0 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:seg.x0, y:0}, canvas );
+		var pt1 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:seg.x1, y:1}, canvas );
+		context.fillRect( pt0.x, pt0.y, pt1.x-pt0.x, pt1.y-pt0.y );
+	}
+};
 
 GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData )
 {
