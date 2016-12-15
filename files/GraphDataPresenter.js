@@ -190,6 +190,8 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 		{
 			var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
 			var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
+
+
 			context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
 		}
 	}
