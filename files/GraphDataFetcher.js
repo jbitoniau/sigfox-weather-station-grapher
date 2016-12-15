@@ -108,7 +108,7 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 						}
 						else
 						{
-							graphData.push( {x:x, y:0} );	]// Still add it to the array so detecting end of x data below properly works. We shouldn't put a zero here but remove the point completely
+							graphData.push( {x:x, y:0} );	// Still add it to the array so detecting end of x data below properly works. We shouldn't put a zero here but remove the point completely
 							console.warn("Invalid data point (x:" + x + ", y:"+y);
 						}
 					}
