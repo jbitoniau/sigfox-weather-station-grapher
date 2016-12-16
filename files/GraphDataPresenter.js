@@ -68,7 +68,7 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 
 	// Areas representing missing data ranges
 	context.fillStyle = '#FFEEEE';
-	var threshold = 12 * 60;
+	var threshold = 10.5 * 60;
 	GraphDataPresenter.drawGraphDataGaps( context, canvas, graphDataWindow, graphData, threshold );
 
 	// Secondary grid lines
@@ -181,104 +181,120 @@ GraphDataPresenter.getGraphDataVisibleRange = function( graphDataWindow, graphDa
 	return {i0:i0, i1:i1};
 };
 
+GraphDataPresenter.parseGraphData = function( graphData, threshold, onContiguousDataRange, onMissingDataRange, i0, n )
+{
+	if ( i0===undefined )
+		i0 = 0;
+	if ( n===undefined )
+		n = graphData.length-i0;
+	if ( n<=0 )
+		return;
+	
+	var i1 = i0+n-1;
+	if ( i1>=graphData.length )
+		i1 = graphData.length-1;
+
+	// Special case with single data point 
+	if ( i0===i1 )
+	{
+		if ( onContiguousDataRange )
+			onContiguousDataRange( i0, i1 );
+		return;
+	}
+
+	var i = i0;
+	var i0dataOK = i;
+	do
+	{
+		var x0 = graphData[i].x;
+		var x1 = graphData[i+1].x;
+		var d = x0-x1;
+		if ( d>threshold )
+		{
+			if ( onContiguousDataRange )
+				onContiguousDataRange( i0dataOK, i );
+			if ( onMissingDataRange )
+				onMissingDataRange( i, i+1 );
+			i0dataOK = i+1;
+		}
+		i++;
+	}
+	while ( i<i1 );
+
+	if ( onContiguousDataRange )
+		onContiguousDataRange( i0dataOK, i );
+};
+
 GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindow, graphData, threshold )
 {
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
-	var i0 = r.i0;
-	var i1 = r.i1;
-	
-	for ( var i=i0; i<=i1-1; i++ )
-	{
-		var x0 = graphData[i].x;
-		var x1 = graphData[i+1].x;
-		var d = x0-x1;
-		if ( d>threshold )
+
+	var n = r.i1-r.i0+1;
+
+	var onMissingDataRange = function(i0, i1)	
 		{
-			var wp0 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x1, y:0}, graphDataWindow );
-			var cp0 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp0.x, y:1}, canvas );
-			var wp1 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x0, y:0}, graphDataWindow );
-			var cp1 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp1.x, y:0}, canvas );
-			
-			var w = cp1.x-cp0.x;
-			var h = cp1.y-cp0.y;
-			context.fillRect(cp0.x, cp0.y, w, h );
-		}
-	}
-};
+			for ( var i=i0; i<=i1-1; i++ )
+			{
+				var x0 = graphData[i].x;
+				var x1 = graphData[i+1].x;
+				var d = x0-x1;
+				if ( d>threshold )
+				{
+					var wp0 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x1, y:0}, graphDataWindow );
+					var cp0 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp0.x, y:1}, canvas );
+					var wp1 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x0, y:0}, graphDataWindow );
+					var cp1 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp1.x, y:0}, canvas );
+					
+					var w = cp1.x-cp0.x;
+					var h = cp1.y-cp0.y;
+					context.fillRect(cp0.x, cp0.y, w, h );
+				}
+			}
+		};
 
-GraphDataPresenter.getVisibleRange = function( graphData, startIndex, endIndex, threshold )
-{
-	var n = endIndex - startIndex;
-	if ( n<0 )
-		return null;
-
-	if ( n===1 )
-		return {i0:startIndex, i1:startIndex};
-
-	var i = startIndex;
-	while ( i<endIndex-1 )
-	{
-		var x0 = graphData[i].x;
-		var x1 = graphData[i+1].x;
-		var d = x0-x1;
-		if ( d>threshold )
-		{
-			break;
-		}
-		i++;
-	}
-	return {i0:startIndex, i1:i};
+	GraphDataPresenter.parseGraphData( graphData, threshold, null, onMissingDataRange, r.i0, n );
 };
 
 GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData, threshold  )
 {
+	var pointSize = 0;
+	var n = graphDataWindow.width / threshold;
+	if ( n<100 )
+		pointSize = 4;
+	else if ( n<200 )
+		pointSize = 2;
+
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
 
-	var i0total = r.i0;
-	var i1total = r.i1;
-	
-	var i0 = i0total;
-	var i1 = null;
-	do 
-	{
-		var curr = GraphDataPresenter.getVisibleRange( graphData, i0, i1total, threshold );
-		if ( curr===null )
-			return; 
-		var i1 = curr.i1;
+	var n = r.i1-r.i0+1;
 
-		context.beginPath();
-		for ( var i=i0; i<=i1; i++ )
+	var onContiguousDataRange = function(i0, i1)	
 		{
-			var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
-			var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
-			context.lineTo(canvasPoint.x, canvasPoint.y);
-		}
-		context.stroke();
-
-		var pointSize = 0;
-		var n = i1-i0+1;
-		if ( n<100 )
-			pointSize = 4;
-		else if ( n<200 )
-			pointSize = 2;
-
-		if ( pointSize>0 )
-		{
+			context.beginPath();
 			for ( var i=i0; i<=i1; i++ )
 			{
 				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
 				var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
-				context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
+				context.lineTo(canvasPoint.x, canvasPoint.y);
 			}
-		}
+			context.stroke();
 
-		i0 = i1+1;
-	}
-	while ( i0<i1total );
+			if ( pointSize>0 )
+			{
+				for ( var i=i0; i<=i1; i++ )
+				{
+					var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+					var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
+					context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
+				}
+			}
+		};
+
+	GraphDataPresenter.parseGraphData( graphData, threshold, onContiguousDataRange, null, r.i0, n );
 };
 
 ///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript

@@ -2,6 +2,56 @@
 
 function Main()
 {
+	/*
+	// Testing GraphDataPresenter.parseGraphData function:
+	var onContiguousDataRange = function(i0, i1)
+		{
+			console.log("good data: " + i0 + " " + i1 );
+		};
+	var onMissingDataRange = function(i0, i1)
+		{
+			console.log("miss data: " + i0 + " " + i1 );
+		};
+	var data = 
+		[
+			{x:0},
+			{x:-10},
+			{x:-20},
+
+			{x:-50},
+			{x:-60},
+			{x:-70}
+		];
+
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 3);
+	console.log("----");
+
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 1, 2);
+	console.log("----");
+
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 0);
+	console.log("----");
+
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 1, 0);
+	console.log("----");
+
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 5, 1);
+	console.log("----");
+
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange );
+	console.log("----");
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 6);
+	console.log("----");
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 4);
+	console.log("----");
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 1, 3);
+	console.log("----");
+	
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 0);
+	console.log("----");
+	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 1);
+	console.log("----");*/
+
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
 
