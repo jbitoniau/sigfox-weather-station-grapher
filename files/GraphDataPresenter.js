@@ -136,37 +136,43 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 	if ( graphData.length===0 )
 		return;
 
-	var i0 = null;		// Most recent, higher X value
-	for ( var i=0; i<graphData.length; i++ )
+	var xw0 = graphDataWindow.x;
+	var xw1 = graphDataWindow.x + graphDataWindow.width;
+
+	var i0 = null;		// Lower bound (i.e. smallest index) of the graph data range to display
+	var i = 0;
+	while ( i<graphData.length )
 	{
-		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
-		if ( GraphDataPresenter.isInUnitSquare(windowPoint) )
+		if ( graphData[i].x<xw1 )
 		{
 			i0 = i;
 			break;
 		}
+		i++;
 	}
+
 	if ( i0===null )
 		return;
 
-	var i1 = null;
-	for ( var i=graphData.length-1; i>=0; i-- )
+	var i1 = null;		// Higher bound
+	i = graphData.length-1;
+	while ( i>=0 )
 	{
-		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
-		if ( GraphDataPresenter.isInUnitSquare(windowPoint) )
+		if ( graphData[i].x>xw0 )
 		{
 			i1 = i;
 			break;
 		}
+		i--;
 	}
+
 	if ( i1===null )
-		return null;
+		return;
 
 	if ( i0!==0 )
 		i0--;
 	if ( i1!==graphData.length-1 )
 		i1++;
-	//console.log( i0 + " to " + i1);
 
 	context.beginPath();
 	for ( var i=i0; i<=i1; i++ )
@@ -190,8 +196,6 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 		{
 			var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
 			var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
-
-
 			context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
 		}
 	}
