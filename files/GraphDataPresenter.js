@@ -66,6 +66,11 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	context.fillStyle = '#EEEEFF';
 	GraphDataPresenter.drawGraphDataRange( context, canvas, graphDataWindow, graphData );
 
+	// Areas representing missing data ranges
+	context.fillStyle = '#FFEEEE';
+	var threshold = 12 * 60;
+	GraphDataPresenter.drawGraphDataGaps( context, canvas, graphDataWindow, graphData, threshold );
+
 	// Secondary grid lines
 	context.strokeStyle = "#DDDDDD";
 	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, 7 );
@@ -131,10 +136,11 @@ GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWind
 	}
 };
 
-GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData )
+// Returns {i0, i1} or null
+GraphDataPresenter.getGraphDataVisibleRange = function( graphDataWindow, graphData )
 {
 	if ( graphData.length===0 )
-		return;
+		return null;
 
 	var xw0 = graphDataWindow.x;
 	var xw1 = graphDataWindow.x + graphDataWindow.width;
@@ -150,9 +156,8 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 		}
 		i++;
 	}
-
 	if ( i0===null )
-		return;
+		return null;
 
 	var i1 = null;		// Higher bound
 	i = graphData.length-1;
@@ -165,14 +170,51 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 		}
 		i--;
 	}
-
 	if ( i1===null )
-		return;
+		return null;
 
 	if ( i0!==0 )
 		i0--;
 	if ( i1!==graphData.length-1 )
 		i1++;
+
+	return {i0:i0, i1:i1};
+};
+
+GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindow, graphData, threshold )
+{
+	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
+	if ( r===null )
+		return;
+	var i0 = r.i0;
+	var i1 = r.i1;
+	
+	for ( var i=i0; i<=i1-1; i++ )
+	{
+		var x0 = graphData[i].x;
+		var x1 = graphData[i+1].x;
+		var d = x0-x1;
+		if ( d>threshold )
+		{
+			var wp0 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x1, y:0}, graphDataWindow );
+			var cp0 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp0.x, y:1}, canvas );
+			var wp1 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x0, y:0}, graphDataWindow );
+			var cp1 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp1.x, y:0}, canvas );
+			
+			var w = cp1.x-cp0.x;
+			var h = cp1.y-cp0.y;
+			context.fillRect(cp0.x, cp0.y, w, h );
+		}
+	}
+};
+
+GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData )
+{
+	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
+	if ( r===null )
+		return;
+	var i0 = r.i0;
+	var i1 = r.i1;
 
 	context.beginPath();
 	for ( var i=i0; i<=i1; i++ )
@@ -200,7 +242,6 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 		}
 	}
 };
-
 
 ///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
 GraphDataPresenter.pad = function(n, width, z) 
