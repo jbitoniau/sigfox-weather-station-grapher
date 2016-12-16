@@ -106,7 +106,7 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	// Data 
 	context.strokeStyle="#666666";
 	context.fillStyle="#444444";
-	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData );
+	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData, threshold );
 };
 
 GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWindow, graphData )
@@ -208,39 +208,77 @@ GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindo
 	}
 };
 
-GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData )
+GraphDataPresenter.getVisibleRange = function( graphData, startIndex, endIndex, threshold )
+{
+	var n = endIndex - startIndex;
+	if ( n<0 )
+		return null;
+
+	if ( n===1 )
+		return {i0:startIndex, i1:startIndex};
+
+	var i = startIndex;
+	while ( i<endIndex-1 )
+	{
+		var x0 = graphData[i].x;
+		var x1 = graphData[i+1].x;
+		var d = x0-x1;
+		if ( d>threshold )
+		{
+			break;
+		}
+		i++;
+	}
+	return {i0:startIndex, i1:i};
+};
+
+GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData, threshold  )
 {
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
-	var i0 = r.i0;
-	var i1 = r.i1;
 
-	context.beginPath();
-	for ( var i=i0; i<=i1; i++ )
+	var i0total = r.i0;
+	var i1total = r.i1;
+	
+	var i0 = i0total;
+	var i1 = null;
+	do 
 	{
-		var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
-		var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
-		context.lineTo(canvasPoint.x, canvasPoint.y);
-	}
-	context.stroke();
+		var curr = GraphDataPresenter.getVisibleRange( graphData, i0, i1total, threshold );
+		if ( curr===null )
+			return; 
+		var i1 = curr.i1;
 
-	var pointSize = 0;
-	var n = i1-i0+1;
-	if ( n<100 )
-		pointSize = 4;
-	else if ( n<200 )
-		pointSize = 2;
-
-	if ( pointSize>0 )
-	{
+		context.beginPath();
 		for ( var i=i0; i<=i1; i++ )
 		{
 			var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
 			var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
-			context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
+			context.lineTo(canvasPoint.x, canvasPoint.y);
 		}
+		context.stroke();
+
+		var pointSize = 0;
+		var n = i1-i0+1;
+		if ( n<100 )
+			pointSize = 4;
+		else if ( n<200 )
+			pointSize = 2;
+
+		if ( pointSize>0 )
+		{
+			for ( var i=i0; i<=i1; i++ )
+			{
+				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+				var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
+				context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
+			}
+		}
+
+		i0 = i1+1;
 	}
+	while ( i0<i1total );
 };
 
 ///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
