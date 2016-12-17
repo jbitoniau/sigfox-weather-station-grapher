@@ -73,6 +73,8 @@ function Main()
 		getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
 		getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
 		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing,
+
+		contiguityThreshold: 10.2* 60	
 	};
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );

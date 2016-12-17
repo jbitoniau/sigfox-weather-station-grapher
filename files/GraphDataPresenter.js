@@ -68,8 +68,10 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 
 	// Areas representing missing data ranges
 	context.fillStyle = '#FFEEEE';
-	var threshold = 10.5 * 60;
-	GraphDataPresenter.drawGraphDataGaps( context, canvas, graphDataWindow, graphData, threshold );
+	var contiguityThreshold = null;
+	if ( graphOptions.contiguityThreshold )
+		contiguityThreshold = graphOptions.contiguityThreshold;
+	GraphDataPresenter.drawGraphDataGaps( context, canvas, graphDataWindow, graphData, contiguityThreshold );
 
 	// Secondary grid lines
 	context.strokeStyle = "#DDDDDD";
@@ -106,7 +108,18 @@ GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphO
 	// Data 
 	context.strokeStyle="#666666";
 	context.fillStyle="#444444";
-	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData, threshold );
+
+	var pointSize = 0;
+	var c = 100;
+	if ( contiguityThreshold )
+		c = contiguityThreshold;
+	var n = graphDataWindow.width / contiguityThreshold;
+	if ( n<100 )
+		pointSize = 4;
+	else if ( n<200 )
+		pointSize = 2;
+
+	GraphDataPresenter.drawGraphData( context, pointSize, canvas, graphDataWindow, graphData, contiguityThreshold );
 };
 
 GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWindow, graphData )
@@ -181,7 +194,7 @@ GraphDataPresenter.getGraphDataVisibleRange = function( graphDataWindow, graphDa
 	return {i0:i0, i1:i1};
 };
 
-GraphDataPresenter.parseGraphData = function( graphData, threshold, onContiguousDataRange, onMissingDataRange, i0, n )
+GraphDataPresenter.parseGraphData = function( graphData, contiguityThreshold, onContiguousDataRange, onMissingDataRange, i0, n )
 {
 	if ( i0===undefined )
 		i0 = 0;
@@ -209,7 +222,7 @@ GraphDataPresenter.parseGraphData = function( graphData, threshold, onContiguous
 		var x0 = graphData[i].x;
 		var x1 = graphData[i+1].x;
 		var d = x0-x1;
-		if ( d>threshold )
+		if ( d>contiguityThreshold )
 		{
 			if ( onContiguousDataRange )
 				onContiguousDataRange( i0dataOK, i );
@@ -225,8 +238,11 @@ GraphDataPresenter.parseGraphData = function( graphData, threshold, onContiguous
 		onContiguousDataRange( i0dataOK, i );
 };
 
-GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindow, graphData, threshold )
+GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindow, graphData, contiguityThreshold )
 {
+	if ( !contiguityThreshold )
+		return; 
+
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
@@ -240,7 +256,7 @@ GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindo
 				var x0 = graphData[i].x;
 				var x1 = graphData[i+1].x;
 				var d = x0-x1;
-				if ( d>threshold )
+				if ( d>contiguityThreshold )
 				{
 					var wp0 = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:x1, y:0}, graphDataWindow );
 					var cp0 = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:wp0.x, y:1}, canvas );
@@ -254,25 +270,18 @@ GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindo
 			}
 		};
 
-	GraphDataPresenter.parseGraphData( graphData, threshold, null, onMissingDataRange, r.i0, n );
+	GraphDataPresenter.parseGraphData( graphData, contiguityThreshold, null, onMissingDataRange, r.i0, n );
 };
 
-GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData, threshold  )
+GraphDataPresenter.drawGraphData = function( context, pointSize, canvas, graphDataWindow, graphData, contiguityThreshold  )
 {
-	var pointSize = 0;
-	var n = graphDataWindow.width / threshold;
-	if ( n<100 )
-		pointSize = 4;
-	else if ( n<200 )
-		pointSize = 2;
-
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
 
 	var n = r.i1-r.i0+1;
 
-	var onContiguousDataRange = function(i0, i1)	
+	var drawData = function(i0, i1)	
 		{
 			context.beginPath();
 			for ( var i=i0; i<=i1; i++ )
@@ -294,7 +303,14 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 			}
 		};
 
-	GraphDataPresenter.parseGraphData( graphData, threshold, onContiguousDataRange, null, r.i0, n );
+	if ( contiguityThreshold )
+	{
+		GraphDataPresenter.parseGraphData( graphData, contiguityThreshold, drawData, null, r.i0, n );
+	}
+	else
+	{
+		drawData( r.i0, r.i1 );
+	}
 };
 
 ///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
@@ -393,8 +409,8 @@ GraphDataPresenter.timeSubdivisions = [
 	{ spacing:10*60, getText:GraphDataPresenter.getFullTimeText },				// 10 minutes
 	{ spacing:60*60, getText:GraphDataPresenter.getFullTimeText },				// 1 hour
 	{ spacing:6*60*60, getText:GraphDataPresenter.getFullTimeText },			// 6 hour
-	{ spacing:12*60*60, getText:GraphDataPresenter.getDayWithPeriodText },		// half a day
-	{ spacing:24*60*60, getText:GraphDataPresenter.getDayText },				// half a day
+	{ spacing:12*60*60, getText:GraphDataPresenter.getDayWithPeriodText },		// Half a day
+	{ spacing:24*60*60, getText:GraphDataPresenter.getDayText },				// A day
 	{ spacing:7*24*60*60, getText:GraphDataPresenter.getDayText },				// 1 week
 	{ spacing:365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// An average month, taking into account leap years
 	{ spacing:365.25*24*60*60, getText:GraphDataPresenter.getYearText }			// An average year, taking into account leap years 
