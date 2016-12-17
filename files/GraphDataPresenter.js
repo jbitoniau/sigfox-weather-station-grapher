@@ -411,8 +411,11 @@ GraphDataPresenter.timeSubdivisions = [
 	{ spacing:6*60*60, getText:GraphDataPresenter.getFullTimeText },			// 6 hour
 	{ spacing:12*60*60, getText:GraphDataPresenter.getDayWithPeriodText },		// Half a day
 	{ spacing:24*60*60, getText:GraphDataPresenter.getDayText },				// A day
+	{ spacing:2*24*60*60, getText:GraphDataPresenter.getDayText },				// 2 days
 	{ spacing:7*24*60*60, getText:GraphDataPresenter.getDayText },				// 1 week
 	{ spacing:365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// An average month, taking into account leap years
+	{ spacing:3*365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// 3 average months
+	{ spacing:6*365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// 6 average months
 	{ spacing:365.25*24*60*60, getText:GraphDataPresenter.getYearText }			// An average year, taking into account leap years 
 ];
 
