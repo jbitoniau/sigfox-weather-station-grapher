@@ -28,7 +28,7 @@ function GraphController( canvas, graphData, graphDataWindow, graphOptions )
 	this._canvas.addEventListener( 'touchmove', this._onTouchMoveHandler );
 	this._canvas.addEventListener( 'touchend', this._onTouchEndHandler );
 
-	this._lastCanvasPoint = null;	
+	this._mousePosition = null;	
 	this._touches = [];		// An array of {x, y, id} objects. The order of the touches is chronological as they appear in touch start event
 
 	this._onGraphDataWindowChange = null;
@@ -53,7 +53,7 @@ GraphController.prototype.update = function()
 
 // Update the graph data window to zoom by the given factors on x and y axes while preserving the graph data point
 // at the given canvas point to that same canvas position
-GraphController.prototype._zoom = function( canvasPoint, zoomFactorX, zoomFactorY )
+GraphController.prototype.zoom = function( canvasPoint, zoomFactorX, zoomFactorY )
 {
 	var graphDataPoint =  GraphDataPresenter.canvasPointToGraphDataPoint( canvasPoint, this._canvas, this._graphDataWindow );
 	this._graphDataWindow.width *= zoomFactorX;
@@ -65,7 +65,7 @@ GraphController.prototype._zoom = function( canvasPoint, zoomFactorX, zoomFactor
 };
 
 // Update the graph data window so the graph data point at "canvasPointFrom" pans to "canvasPointTo" position
-GraphController.prototype._pan = function( canvasPointFrom, canvasPointTo )
+GraphController.prototype.pan = function( canvasPointFrom, canvasPointTo )
 {
 	var graphPointFrom = GraphDataPresenter.canvasPointToGraphDataPoint( canvasPointFrom, this._canvas, this._graphDataWindow );
 	var graphPointTo = GraphDataPresenter.canvasPointToGraphDataPoint( canvasPointTo, this._canvas, this._graphDataWindow );
@@ -76,12 +76,12 @@ GraphController.prototype._pan = function( canvasPointFrom, canvasPointTo )
 };
 
 // Update the graph data window to pan and zoom based on the movement of two canvas points. 
-GraphController.prototype._panAndZoom = function( firstCanvasPointFrom, firstCanvasPointTo, secondCanvasPointFrom, secondCanvasPointTo  )
+GraphController.prototype.panAndZoom = function( firstCanvasPointFrom, firstCanvasPointTo, secondCanvasPointFrom, secondCanvasPointTo  )
 {
 	var ptA0 = GraphDataPresenter.canvasPointToGraphDataPoint( firstCanvasPointFrom, this._canvas, this._graphDataWindow );
 	var ptB0 = GraphDataPresenter.canvasPointToGraphDataPoint( secondCanvasPointFrom, this._canvas, this._graphDataWindow );
 	
-	this._pan( firstCanvasPointFrom, firstCanvasPointTo );
+	this.pan( firstCanvasPointFrom, firstCanvasPointTo );
 
 	var ptB1 = GraphDataPresenter.canvasPointToGraphDataPoint( secondCanvasPointTo, this._canvas, this._graphDataWindow );
 	
@@ -95,107 +95,79 @@ GraphController.prototype._panAndZoom = function( firstCanvasPointFrom, firstCan
 	if ( Math.abs(secondCanvasPointTo.y-firstCanvasPointTo.y)>=m )
 		zy = (ptB0.y - ptA0.y) / (ptB1.y - ptA0.y);
 
-	this._zoom( firstCanvasPointFrom, zx, zy );
-};
-
-///!!!
-GraphController.prototype.zoom = function( zoomFactor, graphWindowPoint, axes )
-{
-	if ( !graphWindowPoint )
-		graphWindowPoint = {x:0.5, y:0.5};
-	
-	var graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, this._graphDataWindow );
-
-	if ( !axes )
-		axes = 'xy';
-
-	if ( axes.indexOf('x')!==-1 )
-		this._graphDataWindow.width *= zoomFactor;
-
-	if ( axes.indexOf('y')!==-1 )
-		this._graphDataWindow.height *= zoomFactor;
-
-	var graphDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, this._graphDataWindow );
-
-	this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
-	this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
-
-	if ( this._onGraphDataWindowChange )
-	{
-		this._onGraphDataWindowChange();
-	}
+	this.zoom( firstCanvasPointFrom, zx, zy );
 };
 
 GraphController.prototype._onKeyDown = function( event )
 {
-	var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, this._graphDataWindow );
-	var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, this._graphDataWindow );
-	var s = 0.1;
-	var dx = (c1.x - c0.x) * s;
-	var dy = (c1.y - c0.y) * s;
+	var canvasPointFrom = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:0.5, y:0.5}, this._canvas );
 
-	var windowChanged = false;
-	if ( event.keyCode===37 )				// left arrow
+	var windowUpdated = false;
+	if ( event.keyCode>=37 && event.keyCode<=40 )
 	{
-		this._graphDataWindow.x -= dx;
-		windowChanged = true;
-	}
-	else if ( event.keyCode===39 )			// right arrow
-	{
-		this._graphDataWindow.x += dx;
-		windowChanged = true;
-	}
-	else if ( event.keyCode===38 )			// up arrow
-	{
-		this._graphDataWindow.y += dy;
-		windowChanged = true;
-	}
-	else if ( event.keyCode===40 )			// down arrow
-	{
-		this._graphDataWindow.y -= dy;
-		windowChanged = true;
-	}
-	else if ( event.keyCode===187 ||  event.keyCode===189 )		// +/= and -/_
-	{
-		var zoomFactor = 1;
-		var k = 0.1;
-		if ( event.keyCode===187 )
-		{	
-			zoomFactor -= k;
-		}
-		else if ( event.keyCode===189 )
+		var k = 50;
+		var dx = this._canvas.width / k;
+		var dy = this._canvas.height / k;
+
+		var canvasPointTo = { x:canvasPointFrom.x, y:canvasPointFrom.y };
+		switch ( event.keyCode )
 		{
-			zoomFactor += k;
+			case 37: 
+				canvasPointTo.x += dx;  // left arrow
+				break;
+			case 39: 
+				canvasPointTo.x -= dx;  // right arrow
+				break;
+			case 38: 
+				canvasPointTo.y += dy;  // up arrow
+				break;
+			case 40: 
+				canvasPointTo.y -= dy;  // down arrow
+				break;	
 		}
-		this.zoom( zoomFactor );
-		windowChanged = true;
+		this.pan( canvasPointFrom, canvasPointTo );
+		windowUpdated = true;
 	}
-	
-	if ( windowChanged )
+	else if ( event.keyCode===187 )		// +/= 
+	{
+		if ( event.shiftKey )
+			this.zoom( canvasPointFrom, 1, 0.9 );
+		else
+			this.zoom( canvasPointFrom, 0.9, 1 );
+		windowUpdated = true;
+	}
+	else if ( event.keyCode===189 )		// -/_
+	{
+		if ( event.shiftKey )
+			this.zoom( canvasPointFrom, 1, 1.1 );
+		else
+			this.zoom( canvasPointFrom, 1.1, 1 );
+		windowUpdated = true;
+	}
+
+	if ( windowUpdated )
 	{
 		this.update();
 		if ( this._onGraphDataWindowChange )
-		{
 			this._onGraphDataWindowChange();
-		}
 	}
 };
 
 GraphController.prototype._onMouseDown = function( event )
 {
-	this._lastCanvasPoint = GraphController._getCanvasPointFromMouseEvent( event );
+	this._mousePosition = GraphController._getCanvasPointFromMouseEvent( event );
 };
 
 GraphController.prototype._onMouseMove = function( event )
 {
-	if ( !this._lastCanvasPoint )
+	if ( !this._mousePosition )
 		return;
 
 	var canvasPoint = GraphController._getCanvasPointFromMouseEvent( event );
 	var graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
 	graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
 
-	var lastGraphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( this._lastCanvasPoint, this._canvas );
+	var lastGraphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( this._mousePosition, this._canvas );
 	lastGraphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( lastGraphDataPoint, this._graphDataWindow );
 
 	var deltaX = graphDataPoint.x - lastGraphDataPoint.x;
@@ -203,8 +175,8 @@ GraphController.prototype._onMouseMove = function( event )
 	this._graphDataWindow.x -= deltaX;
 	this._graphDataWindow.y -= deltaY;
 
-	this._lastCanvasPoint = canvasPoint;
-	this._lastCanvasPointsFromTouches = null;
+	this._mousePosition = canvasPoint;
+	this._mousePositionsFromTouches = null;
 
 	this.update();
 	if ( this._onGraphDataWindowChange )
@@ -215,65 +187,49 @@ GraphController.prototype._onMouseMove = function( event )
 
 GraphController.prototype._onMouseUp = function( event )
 {
-	this._lastCanvasPoint = null;
+	this._mousePosition = null;
 };
 
 GraphController.prototype._onWheel = function( event )
 {
+	var canvasPointFrom = GraphController._getCanvasPointFromMouseEvent( event );
 	if ( event.ctrlKey )
 	{
 		var wheelDelta = 0;
 		if ( Math.abs(event.deltaX)>Math.abs(event.deltaY) )
-		{
 			wheelDelta = event.deltaX;
-		}
 		else
-		{
 			wheelDelta = event.deltaY;
-		}
 
-		var canvasPoint = GraphController._getCanvasPointFromMouseEvent( event );
-		var	graphWindowPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
-		
-		var zoomFactor = 1.0;
-		var k = 0.001
+		var zoomFactor = 1;
 		if ( wheelDelta>0 )
-		{	
-			zoomFactor += k;
-		}
+			zoomFactor = 1.001;
 		else
-		{
-			zoomFactor -= k;
-		}
-
-		var axes = 'x';
-		if ( event.shiftKey )
-		{
-			axes = 'y';
-		}
+			zoomFactor = 0.999;
 		
 		for ( var i=0; i<Math.abs(wheelDelta); ++i )
 		{
-			this.zoom( zoomFactor, graphWindowPoint, axes );
+			if ( event.shiftKey )
+				this.zoom( canvasPointFrom, 1, zoomFactor );
+			else
+				this.zoom( canvasPointFrom, zoomFactor, 1 );
 		}
 	}
 	else
 	{
-		var c0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:0, y:0}, this._graphDataWindow );
-		var c1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( {x:1, y:1}, this._graphDataWindow );
-		var s = 0.001;					// Decent factor for OSX, might differ for other platform/browser 
-		var dx = event.deltaX * (c1.x - c0.x) * s;
-		var dy = event.deltaY * (c1.y - c0.y) * s;
-		this._graphDataWindow.x += dx;	// Proper sign for OSX, might differ for other platform/browser 
-		this._graphDataWindow.y -= dy;
+		var k = 2000;
+		var dx = this._canvas.width / k;
+		var dy = this._canvas.height / k;
+			
+		var canvasPointTo = { x:canvasPointFrom.x, y:canvasPointFrom.y };
+		canvasPointTo.x -= dx * event.deltaX;
+		canvasPointTo.y -= dy * event.deltaY;
+		this.pan( canvasPointFrom, canvasPointTo );
 	}
 
 	this.update();
-		
 	if ( this._onGraphDataWindowChange )
-	{
 		this._onGraphDataWindowChange();
-	}
 
 	event.preventDefault();
 };
@@ -325,11 +281,11 @@ GraphController.prototype._onTouchMove = function( event )
 
 	if ( this._touches.length===1 )
 	{
-		this._pan( prevTouches[0], this._touches[0] );
+		this.pan( prevTouches[0], this._touches[0] );
 	}
 	else if ( this._touches.length===2 )
 	{
-		this._panAndZoom( prevTouches[0], this._touches[0], prevTouches[1], this._touches[1] );
+		this.panAndZoom( prevTouches[0], this._touches[0], prevTouches[1], this._touches[1] );
 	}
 	
 	this.update();

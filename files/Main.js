@@ -78,7 +78,7 @@ function Main()
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
 	graphController.update();
 
-	var zoomInButton = document.getElementById('graphZoomInButton');
+	/*var zoomInButton = document.getElementById('graphZoomInButton');
 	zoomInButton.onclick = 
 		function( event ) 
 		{
@@ -92,7 +92,7 @@ function Main()
 		{
 			graphController.zoom( 1.2, null, 'x' );
 			graphController.update();
-		};
+		};*/
 
 	var promise = graphDataFetcher.fetchData()
 		.then(
