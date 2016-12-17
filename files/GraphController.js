@@ -163,26 +163,14 @@ GraphController.prototype._onMouseMove = function( event )
 	if ( !this._mousePosition )
 		return;
 
-	var canvasPoint = GraphController._getCanvasPointFromMouseEvent( event );
-	var graphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, this._canvas );
-	graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphDataPoint, this._graphDataWindow );
+	var prevMousePosition = this._mousePosition;
+	this._mousePosition = GraphController._getCanvasPointFromMouseEvent( event );
 
-	var lastGraphDataPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( this._mousePosition, this._canvas );
-	lastGraphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( lastGraphDataPoint, this._graphDataWindow );
-
-	var deltaX = graphDataPoint.x - lastGraphDataPoint.x;
-	var deltaY = graphDataPoint.y - lastGraphDataPoint.y;
-	this._graphDataWindow.x -= deltaX;
-	this._graphDataWindow.y -= deltaY;
-
-	this._mousePosition = canvasPoint;
-	this._mousePositionsFromTouches = null;
+	this.pan( prevMousePosition, this._mousePosition );
 
 	this.update();
 	if ( this._onGraphDataWindowChange )
-	{
 		this._onGraphDataWindowChange();
-	}
 };
 
 GraphController.prototype._onMouseUp = function( event )
@@ -248,16 +236,14 @@ GraphController._getCanvasPointFromMouseEvent = function( event )
 
 GraphController.prototype._onTouchStart = function( event )
 {
-	var canvasPoints = GraphController._getTouchesFromEvent( event );
-	for ( var id in canvasPoints )
+	var changedTouches = GraphController._getTouchesFromEvent( event );
+	for ( var id in changedTouches )
 	{
 		var index = GraphController._getTouchIndexById( this._touches, id );
 		if ( index!==-1 )
-		{
 			delete this._touches[index];	// If somehow we already had this touch in our array (this means we've missed a touch end), we removed it
-		}
 
-		this._touches.push( canvasPoints[id] );
+		this._touches.push( changedTouches[id] );
 	}
 
 	event.preventDefault();		// Preventing default on touch events prevent the "pull to refresh" feature on Chrome Android
@@ -269,14 +255,12 @@ GraphController.prototype._onTouchMove = function( event )
 	var prevTouches = GraphController._cloneTouches( this._touches );
 
 	// Update current touches
-	var canvasPoints = GraphController._getTouchesFromEvent( event );
-	for ( var id in canvasPoints )
+	var changedTouches = GraphController._getTouchesFromEvent( event );
+	for ( var id in changedTouches )
 	{
 		var index = GraphController._getTouchIndexById( this._touches, id );
 		if ( index!==-1 )
-		{
-			this._touches[index] = canvasPoints[id];
-		}
+			this._touches[index] = changedTouches[id];
 	}
 
 	if ( this._touches.length===1 )
@@ -297,14 +281,12 @@ GraphController.prototype._onTouchMove = function( event )
 
 GraphController.prototype._onTouchEnd = function( event )
 {
-	var canvasPoints = GraphController._getTouchesFromEvent( event );
-	for ( var id in canvasPoints )
+	var changedTouches = GraphController._getTouchesFromEvent( event );
+	for ( var id in changedTouches )
 	{
 		var index = GraphController._getTouchIndexById( this._touches, id );
 		if ( index!==-1 )
-		{
 			this._touches.splice(index, 1);
-		}
 	}
 
 	event.preventDefault();
