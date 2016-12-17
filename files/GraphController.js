@@ -300,6 +300,8 @@ GraphController.prototype._onTouchStart = function( event )
 	event.preventDefault();		// Preventing default on touch events prevent the "pull to refresh" feature on Chrome Android
 };
 
+// Update the graph data window to zoom by the given factors on x and y axes while preserving the graph data point
+// at the given canvas point to that same canvas position
 GraphController.prototype._zoom = function( canvasPoint, zoomFactorX, zoomFactorY )
 {
 	var graphDataPoint =  GraphDataPresenter.canvasPointToGraphDataPoint( canvasPoint, this._canvas, this._graphDataWindow );
@@ -311,40 +313,38 @@ GraphController.prototype._zoom = function( canvasPoint, zoomFactorX, zoomFactor
 	this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
 };
 
-GraphController.prototype._pan = function( previousCanvasPoint, currentCanvasPoint )
+// Update the graph data window so the graph data point at "canvasPointFrom" pans to "canvasPointTo" position
+GraphController.prototype._pan = function( canvasPointFrom, canvasPointTo )
 {
-	var prevGraphPoint = GraphDataPresenter.canvasPointToGraphDataPoint( previousCanvasPoint, this._canvas, this._graphDataWindow );
-	var currentGraphPoint = GraphDataPresenter.canvasPointToGraphDataPoint( currentCanvasPoint, this._canvas, this._graphDataWindow );
-	var dx = currentGraphPoint.x - prevGraphPoint.x;
-	var dy = currentGraphPoint.y - prevGraphPoint.y;
+	var graphPointFrom = GraphDataPresenter.canvasPointToGraphDataPoint( canvasPointFrom, this._canvas, this._graphDataWindow );
+	var graphPointTo = GraphDataPresenter.canvasPointToGraphDataPoint( canvasPointTo, this._canvas, this._graphDataWindow );
+	var dx = graphPointTo.x - graphPointFrom.x;
+	var dy = graphPointTo.y - graphPointFrom.y;
 	this._graphDataWindow.x -= dx;
 	this._graphDataWindow.y -= dy;
 };
 
-GraphController.prototype._panAndZoom = function( touchA0, touchA1, touchB0, touchB1  )
+// Update the graph data window to pan and zoom based on the movement of two canvas points. 
+GraphController.prototype._panAndZoom = function( firstCanvasPointFrom, firstCanvasPointTo, secondCanvasPointFrom, secondCanvasPointTo  )
 {
-	var ptA0 = GraphDataPresenter.canvasPointToGraphDataPoint( touchA0, this._canvas, this._graphDataWindow );
-	var ptB0 = GraphDataPresenter.canvasPointToGraphDataPoint( touchB0, this._canvas, this._graphDataWindow );
+	var ptA0 = GraphDataPresenter.canvasPointToGraphDataPoint( firstCanvasPointFrom, this._canvas, this._graphDataWindow );
+	var ptB0 = GraphDataPresenter.canvasPointToGraphDataPoint( secondCanvasPointFrom, this._canvas, this._graphDataWindow );
 	
-	this._pan( touchA0, touchA1 );
+	this._pan( firstCanvasPointFrom, firstCanvasPointTo );
 
-	var ptB1 = GraphDataPresenter.canvasPointToGraphDataPoint( touchB1, this._canvas, this._graphDataWindow );
+	var ptB1 = GraphDataPresenter.canvasPointToGraphDataPoint( secondCanvasPointTo, this._canvas, this._graphDataWindow );
 	
 	var m = 30;
-	
+
 	var zx = 1;
-	if ( Math.abs(touchB1.x-touchA1.x)>=m )
-	{
+	if ( Math.abs(secondCanvasPointTo.x-firstCanvasPointTo.x)>=m )
 		zx = (ptB0.x - ptA0.x) / (ptB1.x - ptA0.x);
-	}
 
 	var zy = 1;
-	if ( Math.abs(touchB1.y-touchA1.y)>=m )
-	{
+	if ( Math.abs(secondCanvasPointTo.y-firstCanvasPointTo.y)>=m )
 		zy = (ptB0.y - ptA0.y) / (ptB1.y - ptA0.y);
-	}
 
-	this._zoom( touchA0, zx, zy );
+	this._zoom( firstCanvasPointFrom, zx, zy );
 };
 
 GraphController.prototype._onTouchMove = function( event )
