@@ -300,14 +300,51 @@ GraphController.prototype._onTouchStart = function( event )
 	event.preventDefault();		// Preventing default on touch events prevent the "pull to refresh" feature on Chrome Android
 };
 
-GraphController.zoom2 = function( originDataPoint, zoomFactorX, zoomFactorY, graphDataWindow )
+GraphController.prototype._zoom = function( canvasPoint, zoomFactorX, zoomFactorY )
 {
-	var originWindowPoint =  GraphDataPresenter.graphDataPointToGraphWindowPoint( originDataPoint, graphDataWindow );
-	graphDataWindow.width *= zoomFactorX;
-	graphDataWindow.height *= zoomFactorY;
-	var originDataPoint2 = GraphDataPresenter.graphWindowPointToGraphDataPoint( originWindowPoint, graphDataWindow );
-	graphDataWindow.x -= (originDataPoint2.x - originDataPoint.x);
-	graphDataWindow.y -= (originDataPoint2.y - originDataPoint.y);
+	var graphDataPoint =  GraphDataPresenter.canvasPointToGraphDataPoint( canvasPoint, this._canvas, this._graphDataWindow );
+	this._graphDataWindow.width *= zoomFactorX;
+	this._graphDataWindow.height *= zoomFactorY;
+
+	var graphDataPoint2 = GraphDataPresenter.canvasPointToGraphDataPoint( canvasPoint, this._canvas, this._graphDataWindow );
+	this._graphDataWindow.x -= (graphDataPoint2.x - graphDataPoint.x);
+	this._graphDataWindow.y -= (graphDataPoint2.y - graphDataPoint.y);
+};
+
+GraphController.prototype._pan = function( previousCanvasPoint, currentCanvasPoint )
+{
+	var prevGraphPoint = GraphDataPresenter.canvasPointToGraphDataPoint( previousCanvasPoint, this._canvas, this._graphDataWindow );
+	var currentGraphPoint = GraphDataPresenter.canvasPointToGraphDataPoint( currentCanvasPoint, this._canvas, this._graphDataWindow );
+	var dx = currentGraphPoint.x - prevGraphPoint.x;
+	var dy = currentGraphPoint.y - prevGraphPoint.y;
+	this._graphDataWindow.x -= dx;
+	this._graphDataWindow.y -= dy;
+};
+
+GraphController.prototype._panAndZoom = function( touchA0, touchA1, touchB0, touchB1  )
+{
+	var ptA0 = GraphDataPresenter.canvasPointToGraphDataPoint( touchA0, this._canvas, this._graphDataWindow );
+	var ptB0 = GraphDataPresenter.canvasPointToGraphDataPoint( touchB0, this._canvas, this._graphDataWindow );
+	
+	this._pan( touchA0, touchA1 );
+
+	var ptB1 = GraphDataPresenter.canvasPointToGraphDataPoint( touchB1, this._canvas, this._graphDataWindow );
+	
+	var m = 30;
+	
+	var zx = 1;
+	if ( Math.abs(touchB1.x-touchA1.x)>=m )
+	{
+		zx = (ptB0.x - ptA0.x) / (ptB1.x - ptA0.x);
+	}
+
+	var zy = 1;
+	if ( Math.abs(touchB1.y-touchA1.y)>=m )
+	{
+		zy = (ptB0.y - ptA0.y) / (ptB1.y - ptA0.y);
+	}
+
+	this._zoom( touchA0, zx, zy );
 };
 
 GraphController.prototype._onTouchMove = function( event )
@@ -326,92 +363,19 @@ GraphController.prototype._onTouchMove = function( event )
 		}
 	}
 
-	/*var t = "";
-	for ( var i=0; i<prevTouches.length; ++i )
+	if ( this._touches.length===1 )
 	{
-		t+= JSON.stringify(prevTouches[i]) + "   ";
+		this._pan( prevTouches[0], this._touches[0] );
 	}
-	console.log(t);
-
-	var t = "";
-	for ( var i=0; i<this._touches.length; ++i )
+	else if ( this._touches.length===2 )
 	{
-		t+= JSON.stringify(this._touches[i]) + "   ";
+		this._panAndZoom( prevTouches[0], this._touches[0], prevTouches[1], this._touches[1] );
 	}
-	console.log(t);
-	console.log('--------------');*/
-/*this._graphDataWindow.x = -2;
-this._graphDataWindow.y = -2;
-this._graphDataWindow.width = 8;
-this._graphDataWindow.height = 5;
-this._canvas.width = 8;
-this._canvas.height = 5;*/
-
-	/*var touchA0 = { x:0, y:0 };
-	var touchA1 = { x:-1, y:0 };
-	var touchB0 = { x:2, y:1 };
-	var touchB1 = { x:3, y:2 };
-
-	var touchA0 = { x:2, y:3 };
-	var touchA1 = { x:1, y:3 };
-	var touchB0 = { x:4, y:2 };
-	var touchB1 = { x:5, y:1 };*/
-
-	//if ( this._touches.length<2 )
-	//	return;	
-
-	var touchA0 = prevTouches[0];
-	var touchA1 = this._touches[0];
-
-	var touchB0 = null;
-	var touchB1 = null;
-	if ( this._touches.length>=2 )
-	{
-		touchB0 = prevTouches[1];
-		touchB1 = this._touches[1];
-	}
-	else
-	{
-		touchB0 = touchA0;
-		touchB1 = touchA1;
-	}	
-
-	var ptA0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( GraphDataPresenter.canvasPointToGraphWindowPoint( touchA0, this._canvas ), this._graphDataWindow );
-	var ptA1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( GraphDataPresenter.canvasPointToGraphWindowPoint( touchA1, this._canvas ), this._graphDataWindow );
-	var ptB0 = GraphDataPresenter.graphWindowPointToGraphDataPoint( GraphDataPresenter.canvasPointToGraphWindowPoint( touchB0, this._canvas ), this._graphDataWindow );
 	
-	var dx = ptA1.x - ptA0.x;
-	var dy = ptA1.y - ptA0.y;
-	this._graphDataWindow.x -= dx;
-	this._graphDataWindow.y -= dy;
-
-if ( this._touches.length>=2 )
-{	
-	var ptB1 = GraphDataPresenter.graphWindowPointToGraphDataPoint( GraphDataPresenter.canvasPointToGraphWindowPoint( touchB1, this._canvas ), this._graphDataWindow );
-	
-	var m = 30;
-	var zx = 1;
-	//console.log( touchB1.x-touchA1.x );
-	if ( Math.abs(touchB1.x-touchA1.x)>=m )
-	{
-		zx = (ptB0.x - ptA0.x) / (ptB1.x - ptA0.x);
-	}
-
-	var zy = 1;
-	if ( Math.abs(touchB1.y-touchA1.y)>=m )
-	{
-		zy = (ptB0.y - ptA0.y) / (ptB1.y - ptA0.y);
-	}
-
-	GraphController.zoom2( ptA0, zx, zy, this._graphDataWindow );
-}
-
-this.update();
-if ( this._onGraphDataWindowChange )
-	{
+	this.update();
+	if ( this._onGraphDataWindowChange )
 		this._onGraphDataWindowChange();
-	}
-
+	
 	event.preventDefault();
 };
 

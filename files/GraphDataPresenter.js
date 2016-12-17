@@ -635,6 +635,20 @@ GraphDataPresenter.isInUnitSquare = function( point )
 	return true;
 };
 
+GraphDataPresenter.graphDataPointToCanvasPoint = function( graphDataPoint, graphDataWindow, canvas )
+{
+	var graphWindowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphDataPoint, graphDataWindow );
+	var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( graphWindowPoint, canvas );
+	return canvasPoint;
+};
+
+GraphDataPresenter.canvasPointToGraphDataPoint = function( canvasPoint, canvas, graphDataWindow )
+{
+	var graphWindowPoint = GraphDataPresenter.canvasPointToGraphWindowPoint( canvasPoint, canvas );
+	var graphDataPoint = GraphDataPresenter.graphWindowPointToGraphDataPoint( graphWindowPoint, graphDataWindow );
+	return graphDataPoint;
+};
+
 GraphDataPresenter.graphDataPointToGraphWindowPoint = function( graphDataPoint, graphDataWindow )
 {
 	var x2 = (graphDataPoint.x - graphDataWindow.x) / graphDataWindow.width;
