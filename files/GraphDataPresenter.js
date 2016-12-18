@@ -55,20 +55,25 @@ function GraphDataPresenter()
 
 GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphOptions )
 {
+	if ( canvas.width!==canvas.clientWidth )
+		canvas.width=canvas.clientWidth;
+	if ( canvas.height!==canvas.clientHeight )
+		canvas.height = canvas.clientHeight;
+
 	var canvasWidth = canvas.width;
 	var canvasHeight = canvas.height;
 	var context = canvas.getContext("2d");
 
 	if ( graphOptions.clearCanvas )
 	{
-		context.fillStyle = graphOptions.clearColor || "#DDDDDD"; 
+		context.fillStyle = graphOptions.clearColor || "#FFFFFF"; 
 		context.fillRect( 0, 0, canvasWidth, canvasHeight );
 	}
 
 	// Areas representing graph data and nothingness
 	if ( graphOptions.drawDataRange )
 	{
-		context.fillStyle = graphOptions.dataRangeColor || "#EEEEFF";
+		context.fillStyle = graphOptions.dataRangeColor || "#EEEEEE";
 		GraphDataPresenter.drawGraphDataRange( context, canvas, graphDataWindow, graphData );
 	}
 
@@ -95,7 +100,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	if ( graphOptions.getPrimaryLinesTextX || graphOptions.getPrimaryLinesTextY )
 	{
 		var textSize = 14; 
-		context.strokeStyle = graphOptions.primaryLinesColor || "#AAAAAA";
+		context.strokeStyle = graphOptions.primaryLinesColor || "#BBBBBB";
 		context.font = textSize + "px sans-serif";
 		context.fillStyle = graphOptions.primaryLinesTextColor || "#888888";
 		if ( graphOptions.getPrimaryLinesSpacingX )
@@ -107,7 +112,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	// Origin axes
 	if ( graphOptions.drawOriginAxes )
 	{
-		context.strokeStyle = graphOptions.axesLinesColor || "#222222";
+		context.strokeStyle = graphOptions.axesLinesColor || "#444444";
 		var originwp = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:0}, graphDataWindow );
 		var origincp = GraphDataPresenter.graphWindowPointToCanvasPoint( originwp, canvas );
 		if ( originwp.y>=0 && originwp.y<=1 )
@@ -127,8 +132,8 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	}
 
 	// Data 
-	context.strokeStyle = graphOptions.dataLineColor || "#666666";
-	context.fillStyle = graphOptions.dataPointColor || "#444444";
+	context.strokeStyle = graphOptions.dataLineColor || "#222222";
+	context.fillStyle = graphOptions.dataPointColor || "#222222";
 
 	var pointSize = 4;
 	/*var c = 100;
