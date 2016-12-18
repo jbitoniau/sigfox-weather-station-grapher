@@ -4,8 +4,6 @@ function Main()
 {
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
-	canvas.width = canvas.clientWidth;
-	canvas.height = canvas.clientHeight;
 
 	var graphDataFetcher = new GraphDataFetcher('1D80C', 100);
 	var graphData = graphDataFetcher._temperatureData;
@@ -28,7 +26,7 @@ var humidityData = graphDataFetcher._humidityData;
 		drawDataGaps: true,
 		contiguityThreshold: 10.2 * 60,
 			
-		clearColor:'#FFFFFF',
+/*		clearColor:'#FFFFFF',
 		dataRangeColor: "#EEEEEE",
 		dataGapsColor: "#EEEEEE",
 		axesLinesColor: "#AA6666",
@@ -36,14 +34,14 @@ var humidityData = graphDataFetcher._humidityData;
 		primaryLinesColor: '#FFAAAA',
 		secondaryLinesColor: '#FFDDDD',
 		dataLineColor: "#884444",
-		dataPointColor: "#884444",
+		dataPointColor: "#884444",*/
 
 		getPrimaryLinesTextX: GraphDataPresenter.getLinesTextForTime, 
 		getPrimaryLinesSpacingX: GraphDataPresenter.getPrimaryLinesSpacingForTime,
 		getSecondaryLinesSpacingX: GraphDataPresenter.getSecondaryLinesSpacingForTime,
 		getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
 		getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-		//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
+		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
 	};
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
@@ -143,7 +141,7 @@ var humidityData = graphDataFetcher._humidityData;
 				getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
 				//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
 			};
-			GraphDataPresenter.render( canvas, pressureData, graphDataWindow2, graphOptions2 );
+			//GraphDataPresenter.render( canvas, pressureData, graphDataWindow2, graphOptions2 );
 
 			var graphDataWindow3 = {
 				x: graphDataWindow.x,
@@ -172,4 +170,10 @@ var humidityData = graphDataFetcher._humidityData;
 			};
 			GraphDataPresenter.render( canvas, humidityData, graphDataWindow3, graphOptions3 );
 		};	
+
+
+	window.addEventListener( "resize", function(event) 
+		{	
+			graphController.render();
+		});
 }
