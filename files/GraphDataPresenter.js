@@ -53,73 +53,94 @@ function GraphDataPresenter()
 {	
 }
 
-GraphDataPresenter.update = function( canvas, graphData, graphDataWindow, graphOptions )
+GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphOptions )
 {
-	canvas.width = canvas.clientWidth;
-	canvas.height = canvas.clientHeight;
-
 	var canvasWidth = canvas.width;
 	var canvasHeight = canvas.height;
 	var context = canvas.getContext("2d");
 
+	if ( graphOptions.clearCanvas )
+	{
+		context.fillStyle = graphOptions.clearColor || "#DDDDDD"; 
+		context.fillRect( 0, 0, canvasWidth, canvasHeight );
+	}
+
 	// Areas representing graph data and nothingness
-	context.fillStyle = '#EEEEFF';
-	GraphDataPresenter.drawGraphDataRange( context, canvas, graphDataWindow, graphData );
+	if ( graphOptions.drawDataRange )
+	{
+		context.fillStyle = graphOptions.dataRangeColor || "#EEEEFF";
+		GraphDataPresenter.drawGraphDataRange( context, canvas, graphDataWindow, graphData );
+	}
 
 	// Areas representing missing data ranges
-	context.fillStyle = '#FFEEEE';
-	var contiguityThreshold = null;
-	if ( graphOptions.contiguityThreshold )
-		contiguityThreshold = graphOptions.contiguityThreshold;
-	GraphDataPresenter.drawGraphDataGaps( context, canvas, graphDataWindow, graphData, contiguityThreshold );
+	if ( graphOptions.drawDataGaps && graphOptions.contiguityThreshold )
+	{
+		context.fillStyle = graphOptions.dataGapsColor || "#FFEEEE"; 
+		GraphDataPresenter.drawGraphDataGaps( context, canvas, graphDataWindow, graphData, graphOptions.contiguityThreshold );
+	}
 
 	// Secondary grid lines
-	context.strokeStyle = "#DDDDDD";
-	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, 7 );
-	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingY, null, 5 );
+	if ( graphOptions.getSecondaryLinesSpacingX )
+	{
+		context.strokeStyle = graphOptions.secondaryLinesColor || "#DDDDDD";
+		GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, 7 );
+	}
+	if ( graphOptions.getSecondaryLinesSpacingY )
+	{
+		context.strokeStyle = graphOptions.secondaryLinesColor || "#DDDDDD";
+		GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingY, null, 5 );
+	}
 	
 	// Primary grid lines
-	var textSize = 14; 
-	context.strokeStyle = "#AAAAAA";
-	context.font = textSize + "px sans-serif";
-	context.fillStyle="#888888";
-	GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingX, graphOptions.getPrimaryLinesTextX, 7 );
-	GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingY, graphOptions.getPrimaryLinesTextY, 5 );
-	
-	// Origin axes
-	context.strokeStyle="#222222";
-	var originwp = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:0}, graphDataWindow );
-	var origincp = GraphDataPresenter.graphWindowPointToCanvasPoint( originwp, canvas );
-	if ( originwp.y>=0 && originwp.y<=1 )
+	if ( graphOptions.getPrimaryLinesTextX || graphOptions.getPrimaryLinesTextY )
 	{
-		context.beginPath();	
-		context.lineTo( 0, origincp.y );			
-		context.lineTo( canvasWidth, origincp.y );	
-		context.stroke();
+		var textSize = 14; 
+		context.strokeStyle = graphOptions.primaryLinesColor || "#AAAAAA";
+		context.font = textSize + "px sans-serif";
+		context.fillStyle = graphOptions.primaryLinesTextColor || "#888888";
+		if ( graphOptions.getPrimaryLinesSpacingX )
+			GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingX, graphOptions.getPrimaryLinesTextX, 7 );
+		if ( graphOptions.getPrimaryLinesSpacingY )
+			GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingY, graphOptions.getPrimaryLinesTextY, 5 );
 	}
-	if ( originwp.x>=0 && originwp.x<=1 )
-	{
-		context.beginPath();	
-		context.lineTo( origincp.x, 0 );			
-		context.lineTo( origincp.x, canvasHeight );	
-		context.stroke();
-	}
-	
-	// Data 
-	context.strokeStyle="#666666";
-	context.fillStyle="#444444";
 
-	var pointSize = 0;
-	var c = 100;
+	// Origin axes
+	if ( graphOptions.drawOriginAxes )
+	{
+		context.strokeStyle = graphOptions.axesLinesColor || "#222222";
+		var originwp = GraphDataPresenter.graphDataPointToGraphWindowPoint( {x:0, y:0}, graphDataWindow );
+		var origincp = GraphDataPresenter.graphWindowPointToCanvasPoint( originwp, canvas );
+		if ( originwp.y>=0 && originwp.y<=1 )
+		{
+			context.beginPath();	
+			context.lineTo( 0, origincp.y );			
+			context.lineTo( canvasWidth, origincp.y );	
+			context.stroke();
+		}
+		if ( originwp.x>=0 && originwp.x<=1 )
+		{
+			context.beginPath();	
+			context.lineTo( origincp.x, 0 );			
+			context.lineTo( origincp.x, canvasHeight );	
+			context.stroke();
+		}
+	}
+
+	// Data 
+	context.strokeStyle = graphOptions.dataLineColor || "#666666";
+	context.fillStyle = graphOptions.dataPointColor || "#444444";
+
+	var pointSize = 4;
+	/*var c = 100;
 	if ( contiguityThreshold )
 		c = contiguityThreshold;
 	var n = graphDataWindow.width / contiguityThreshold;
 	if ( n<100 )
 		pointSize = 4;
 	else if ( n<200 )
-		pointSize = 2;
+		pointSize = 2;*/
 
-	GraphDataPresenter.drawGraphData( context, pointSize, canvas, graphDataWindow, graphData, contiguityThreshold );
+	GraphDataPresenter.drawGraphData( context, pointSize, canvas, graphDataWindow, graphData, graphOptions.contiguityThreshold );
 };
 
 GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWindow, graphData )

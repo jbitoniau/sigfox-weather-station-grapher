@@ -15,7 +15,9 @@ function GraphDataFetcher(deviceID, limit)
 {
 	this._deviceID = deviceID;
 	this._limit = limit;
-	this._graphData = [];		// should be a public prop
+	this._temperatureData = [];		// should be a public prop
+	this._pressureData = [];
+	this._humidityData = [];	
 	this._xmin = null;
 	this._xminFinalReached = false;
 	this._xmax = null;
@@ -96,7 +98,9 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 					}
 		/// ------------
 
-					var graphData = [];
+					var temperatureData = [];
+			var pressureData = [];
+			var humidityData = [];	
 					for ( var i=0; i<messages.data.length; ++i  )
 					{
 						var message = messages.data[i];
@@ -104,38 +108,65 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 						var y = message.weatherData.temperature;
 						if ( y>=-200 && y <=200 )
 						{ 
-							graphData.push( {x:x, y:y} );
+							temperatureData.push( {x:x, y:y} );
 						}
 						else
 						{
-							graphData.push( {x:x, y:0} );	// Still add it to the array so detecting end of x data below properly works. We shouldn't put a zero here but remove the point completely
-							console.warn("Invalid data point (x:" + x + ", y:"+y);
+							temperatureData.push( {x:x, y:0} );	// Still add it to the array so detecting end of x data below properly works. We shouldn't put a zero here but remove the point completely
+							console.warn("Invalid temperature data point (x:" + x + ", y:"+y);
+						}
+
+						y = message.weatherData.pressure;
+						if ( y>=900 && y<=1200 )
+						{
+							pressureData.push( {x:x, y:y} );
+						}
+						else
+						{
+							pressureData.push( {x:x, y:0} );	
+							console.warn("Invalid pressure data point (x:" + x + ", y:"+y);
+						}
+
+						y = message.weatherData.humidity;
+						if ( y>=0 && y<=100 )
+						{
+							humidityData.push( {x:x, y:y} );
+						}
+						else
+						{
+							humidityData.push( {x:x, y:0} );	
+							console.warn("Invalid humidity data point (x:" + x + ", y:"+y);
 						}
 					}
 
 					// Combine graph data we've just fetched with existing data
-					if ( graphData.length>0 )
+					if ( temperatureData.length>0 )
 					{
-						var xmin = graphData[graphData.length-1].x;
-						var xmax = graphData[0].x;
+						var xmin = temperatureData[temperatureData.length-1].x;
+						var xmax = temperatureData[0].x;
 
-						if ( this._graphData.length===0 )
+						if ( this._temperatureData.length===0 )
 						{
 							// http://stackoverflow.com/questions/16232915/copying-an-array-of-objects-into-another-array-in-javascript
-							this._graphData.push.apply(this._graphData, graphData);
+							this._temperatureData.push.apply(this._temperatureData, temperatureData);
+			this._pressureData.push.apply(this._pressureData, pressureData);
+			this._humidityData.push.apply(this._humidityData, humidityData);
+											
 							this._xmin = xmin;
 							this._xmax = xmax;
 						}
 						else
 						{
 							// Very naive and incomplete!!!
-							for ( var i=0; i<graphData.length; i++ )
+							for ( var i=0; i<temperatureData.length; i++ )
 							{
-								if ( graphData[i].x<this._xmin )
+								if ( temperatureData[i].x<this._xmin )
 								{
-									this._graphData.push( graphData[i] );
+									this._temperatureData.push( temperatureData[i] );
+									this._pressureData.push( pressureData[i] );
+									this._humidityData.push( humidityData[i] );
 								}
-								this._xmin = this._graphData[this._graphData.length-1].x;
+								this._xmin = this._temperatureData[this._temperatureData.length-1].x;
 							}
 						}
 					}

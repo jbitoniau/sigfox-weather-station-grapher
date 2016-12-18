@@ -2,90 +2,59 @@
 
 function Main()
 {
-	/*
-	// Testing GraphDataPresenter.parseGraphData function:
-	var onContiguousDataRange = function(i0, i1)
-		{
-			console.log("good data: " + i0 + " " + i1 );
-		};
-	var onMissingDataRange = function(i0, i1)
-		{
-			console.log("miss data: " + i0 + " " + i1 );
-		};
-	var data = 
-		[
-			{x:0},
-			{x:-10},
-			{x:-20},
-
-			{x:-50},
-			{x:-60},
-			{x:-70}
-		];
-
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 3);
-	console.log("----");
-
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 1, 2);
-	console.log("----");
-
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 0);
-	console.log("----");
-
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 1, 0);
-	console.log("----");
-
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 5, 1);
-	console.log("----");
-
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange );
-	console.log("----");
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 6);
-	console.log("----");
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 4);
-	console.log("----");
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 1, 3);
-	console.log("----");
-	
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 0);
-	console.log("----");
-	GraphDataPresenter.parseGraphData(data, 10, onContiguousDataRange, onMissingDataRange, 0, 1);
-	console.log("----");*/
-
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
+	canvas.width = canvas.clientWidth;
+	canvas.height = canvas.clientHeight;
 
 	var graphDataFetcher = new GraphDataFetcher('1D80C', 100);
-	var graphData = graphDataFetcher._graphData;
+	var graphData = graphDataFetcher._temperatureData;
+var pressureData = graphDataFetcher._pressureData;
+var humidityData = graphDataFetcher._humidityData;
 
 	var graphDataWindow = {
 		x: 0,		// 1st of January 1970! 
-		y: -5,
+	y: -5,
+//		y: 950,
 		width: 100 * (10*60),
-		height: 60
+//		height: 150
+			height: 40
 	};
 
 	var graphOptions = {
+		clearCanvas: true,
+		drawOriginAxes: true,
+		drawDataRange: true,
+		drawDataGaps: true,
+		contiguityThreshold: 10.2 * 60,
+			
+		clearColor:'#FFFFFF',
+		dataRangeColor: "#EEEEEE",
+		dataGapsColor: "#EEEEEE",
+		axesLinesColor: "#AA6666",
+		primaryLinesTextColor: '#AA6666',
+		primaryLinesColor: '#FFAAAA',
+		secondaryLinesColor: '#FFDDDD',
+		dataLineColor: "#884444",
+		dataPointColor: "#884444",
+
 		getPrimaryLinesTextX: GraphDataPresenter.getLinesTextForTime, 
 		getPrimaryLinesSpacingX: GraphDataPresenter.getPrimaryLinesSpacingForTime,
 		getSecondaryLinesSpacingX: GraphDataPresenter.getSecondaryLinesSpacingForTime,
-		
 		getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
 		getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing,
-
-		contiguityThreshold: 10.2* 60	
+		//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
 	};
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
-	graphController.update();
+	//graphController.render();
 
 	/*var zoomInButton = document.getElementById('graphZoomInButton');
 	zoomInButton.onclick = 
 		function( event ) 
 		{
 			graphController.zoom( 0.8, null, 'x' );
-			graphController.update();
+			graphController.render();
 		};
 
 	var zoomOutButton = document.getElementById('graphZoomOutButton');
@@ -93,7 +62,7 @@ function Main()
 		function( event ) 
 		{
 			graphController.zoom( 1.2, null, 'x' );
-			graphController.update();
+			graphController.render();
 		};*/
 
 	var promise = graphDataFetcher.fetchData()
@@ -105,7 +74,7 @@ function Main()
 				{
 					graphDataWindow.x = graphData[0].x - 90 *10*60;
 				}
-				graphController.update();
+				graphController.render();
 			})
 		.catch(
 			function( error )
@@ -127,7 +96,7 @@ function Main()
 						.then(
 							function()
 							{
-								graphController.update();
+								graphController.render();
 								return fetchDataIfNeeded();
 							})
 						.catch(
@@ -146,4 +115,61 @@ function Main()
 		{
 			fetchDataIfNeeded();
 		};
+
+	graphController._onRendered = function()
+		{
+			var graphDataWindow2 = {
+					x: graphDataWindow.x,
+					y: 950, 
+					width: graphDataWindow.width,
+					height: 150
+				};
+
+			var graphOptions2 = {
+				clearCanvas: false,
+				drawOriginAxes: false,
+				drawDataRange: false,
+				drawDataGaps: false,
+				contiguityThreshold: 10.2* 60,
+				
+				axesLinesColor: "#66AA66",
+				primaryLinesTextColor: '#66AA66',
+				primaryLinesColor: '#AAFFAA',
+				secondaryLinesColor: '#DDFFDD',
+				dataLineColor: "#448844",
+				dataPointColor: "#448844",
+
+				getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
+				getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
+				//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
+			};
+			GraphDataPresenter.render( canvas, pressureData, graphDataWindow2, graphOptions2 );
+
+			var graphDataWindow3 = {
+				x: graphDataWindow.x,
+				y: 0, 
+				width: graphDataWindow.width,
+				height: 100
+			};
+
+			var graphOptions3 = {
+				clearCanvas: false,
+				drawOriginAxes: false,
+				drawDataRange: false,
+				drawDataGaps: false,
+				contiguityThreshold: 10.2* 60,
+
+				axesLinesColor: "#6666AA",
+				primaryLinesTextColor: '#6666AA',
+				primaryLinesColor: '#AAAAFF',
+				secondaryLinesColor: '#DDDDFF',
+				dataLineColor: "#444488",
+				dataPointColor: "#444488",
+
+				getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
+				getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
+				//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
+			};
+			GraphDataPresenter.render( canvas, humidityData, graphDataWindow3, graphOptions3 );
+		};	
 }

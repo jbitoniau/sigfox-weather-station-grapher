@@ -32,6 +32,7 @@ function GraphController( canvas, graphData, graphDataWindow, graphOptions )
 	this._touches = [];		// An array of {x, y, id} objects. The order of the touches is chronological as they appear in touch start event
 
 	this._onGraphDataWindowChange = null;
+	this._onRendered = null;
 }
 
 GraphController.prototype.dispose = function()
@@ -46,9 +47,12 @@ GraphController.prototype.dispose = function()
 	this._canvas.removeEventListener( 'touchend', this._onTouchEndHandler );
 };
 
-GraphController.prototype.update = function()
+GraphController.prototype.render = function()
 {
-	GraphDataPresenter.update( this._canvas, this._graphData, this._graphDataWindow, this._graphOptions );
+	GraphDataPresenter.render( this._canvas, this._graphData, this._graphDataWindow, this._graphOptions );
+	
+	if ( this._onRendered )
+		this._onRendered();
 };
 
 // Update the graph data window to zoom by the given factors on x and y axes while preserving the graph data point
@@ -147,9 +151,9 @@ GraphController.prototype._onKeyDown = function( event )
 
 	if ( windowUpdated )
 	{
-		this.update();
 		if ( this._onGraphDataWindowChange )
 			this._onGraphDataWindowChange();
+		this.render();
 	}
 };
 
@@ -168,9 +172,9 @@ GraphController.prototype._onMouseMove = function( event )
 
 	this.pan( prevMousePosition, this._mousePosition );
 
-	this.update();
 	if ( this._onGraphDataWindowChange )
 		this._onGraphDataWindowChange();
+	this.render();
 };
 
 GraphController.prototype._onMouseUp = function( event )
@@ -215,10 +219,10 @@ GraphController.prototype._onWheel = function( event )
 		this.pan( canvasPointFrom, canvasPointTo );
 	}
 
-	this.update();
 	if ( this._onGraphDataWindowChange )
 		this._onGraphDataWindowChange();
-
+	this.render();
+	
 	event.preventDefault();
 };
 
@@ -272,9 +276,9 @@ GraphController.prototype._onTouchMove = function( event )
 		this.panAndZoom( prevTouches[0], this._touches[0], prevTouches[1], this._touches[1] );
 	}
 	
-	this.update();
 	if ( this._onGraphDataWindowChange )
 		this._onGraphDataWindowChange();
+	this.render();
 	
 	event.preventDefault();
 };
