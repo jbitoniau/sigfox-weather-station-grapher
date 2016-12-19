@@ -75,11 +75,13 @@ function Main()
 
 	var onGraphDataTypeChanged = function(prevGraphDataType, nextGraphDataType)
 	{
-		graphOptions.yPropertyName = nextGraphDataType;
+		graphDataWindows[prevGraphDataType].y = graphDataWindow.y;
+		graphDataWindows[prevGraphDataType].height = graphDataWindow.height;
 
 		graphDataWindow.y = graphDataWindows[nextGraphDataType].y;
 		graphDataWindow.height = graphDataWindows[nextGraphDataType].height;
 
+		graphOptions.yPropertyName = nextGraphDataType;
 		graphController.render();
 	};
 
