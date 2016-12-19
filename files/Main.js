@@ -6,9 +6,7 @@ function Main()
 	canvas.focus();
 
 	var graphDataFetcher = new GraphDataFetcher('1D80C', 100);
-	var graphData = graphDataFetcher._temperatureData;
-var pressureData = graphDataFetcher._pressureData;
-var humidityData = graphDataFetcher._humidityData;
+	var graphData = graphDataFetcher._graphData;
 
 	var graphDataWindow = {
 		x: 0,		// 1st of January 1970! 
@@ -20,6 +18,7 @@ var humidityData = graphDataFetcher._humidityData;
 	};
 
 	var graphOptions = {
+		yPropertyName: 'temperature',
 		clearCanvas: true,
 		drawOriginAxes: true,
 		drawDataRange: true,
@@ -45,7 +44,6 @@ var humidityData = graphDataFetcher._humidityData;
 	};
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
-	//graphController.render();
 
 	var graphDataType = 'temperature';
 
@@ -54,11 +52,33 @@ var humidityData = graphDataFetcher._humidityData;
 		'humidity' : document.getElementById('humidityButton'),
 		'pressure' : document.getElementById('pressureButton')
 	};
-	
-var onGraphDataTypeChanged = function(graphDataType)
-{
+		
+	/*var graphDataWindows = {
+		'temperature' : {
+			x: 0,	
+			y: -5,
+			width: 100 * (10*60),
+			height: 40
+		},
+		'humidity' : {
+			x: 0,	
+			y: -5,
+			width: 100 * (10*60),
+			height: 105
+		},
+		'pressure' : {
+			x: 0,	
+			y: 950,
+			width: 100 * (10*60),
+			height: 150
+		}
+	};*/
 
-};
+	var onGraphDataTypeChanged = function(graphDataType)
+	{
+		graphOptions.yPropertyName = graphDataType;
+		graphController.render();
+	};
 
 	for ( var t in buttons )
 	{
@@ -80,33 +100,7 @@ var onGraphDataTypeChanged = function(graphDataType)
 	}
 
 	buttons[graphDataType].className = "roundedButtonToggled";
-
-
-	/*temperatureButton.onclick = 
-		function( event ) 
-		{
-			graphDataType
-			temperatureButton.className = "roundedButtonToggled";
-			//graphController.zoom( 0.8, null, 'x' );
-			//graphController.render();
-		};
-
-	humidityButton.onclick = 
-		function( event ) 
-		{
-			humidityButton.className = "roundedButtonToggled";
-			
-			//graphController.zoom( 0.8, null, 'x' );
-			//graphController.render();
-		};
-
-	/*var zoomOutButton = document.getElementById('graphZoomOutButton');
-	zoomOutButton.onclick = 
-		function( event ) 
-		{
-			graphController.zoom( 1.2, null, 'x' );
-			graphController.render();
-		};*/
+	graphOptions.yPropertyName = graphDataType;
 
 	var promise = graphDataFetcher.fetchData()
 		.then(
@@ -161,59 +155,6 @@ var onGraphDataTypeChanged = function(graphDataType)
 
 	graphController._onRendered = function()
 		{
-			// var graphDataWindow2 = {
-			// 		x: graphDataWindow.x,
-			// 		y: 950, 
-			// 		width: graphDataWindow.width,
-			// 		height: 150
-			// 	};
-
-			// var graphOptions2 = {
-			// 	clearCanvas: false,
-			// 	drawOriginAxes: false,
-			// 	drawDataRange: false,
-			// 	drawDataGaps: false,
-			// 	contiguityThreshold: 10.2* 60,
-				
-			// 	axesLinesColor: "#66AA66",
-			// 	primaryLinesTextColor: '#66AA66',
-			// 	primaryLinesColor: '#AAFFAA',
-			// 	secondaryLinesColor: '#DDFFDD',
-			// 	dataLineColor: "#448844",
-			// 	dataPointColor: "#448844",
-
-			// 	getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
-			// 	getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-			// 	//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
-			// };
-			// //GraphDataPresenter.render( canvas, pressureData, graphDataWindow2, graphOptions2 );
-
-			// var graphDataWindow3 = {
-			// 	x: graphDataWindow.x,
-			// 	y: 0, 
-			// 	width: graphDataWindow.width,
-			// 	height: 100
-			// };
-
-			// var graphOptions3 = {
-			// 	clearCanvas: false,
-			// 	drawOriginAxes: false,
-			// 	drawDataRange: false,
-			// 	drawDataGaps: false,
-			// 	contiguityThreshold: 10.2* 60,
-
-			// 	axesLinesColor: "#6666AA",
-			// 	primaryLinesTextColor: '#6666AA',
-			// 	primaryLinesColor: '#AAAAFF',
-			// 	secondaryLinesColor: '#DDDDFF',
-			// 	dataLineColor: "#444488",
-			// 	dataPointColor: "#444488",
-
-			// 	getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
-			// 	getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-			// 	//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
-			// };
-			// GraphDataPresenter.render( canvas, humidityData, graphDataWindow3, graphOptions3 );
 		};	
 
 

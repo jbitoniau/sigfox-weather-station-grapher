@@ -145,7 +145,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	else if ( n<200 )
 		pointSize = 2;*/
 
-	GraphDataPresenter.drawGraphData( context, pointSize, canvas, graphDataWindow, graphData, graphOptions.contiguityThreshold );
+	GraphDataPresenter.drawGraphData( context, pointSize, canvas, graphDataWindow, graphData, graphOptions.yPropertyName, graphOptions.contiguityThreshold );
 };
 
 GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWindow, graphData )
@@ -299,8 +299,11 @@ GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindo
 	GraphDataPresenter.parseGraphData( graphData, contiguityThreshold, null, onMissingDataRange, r.i0, n );
 };
 
-GraphDataPresenter.drawGraphData = function( context, pointSize, canvas, graphDataWindow, graphData, contiguityThreshold  )
+GraphDataPresenter.drawGraphData = function( context, pointSize, canvas, graphDataWindow, graphData, graphDataYPropertyName, contiguityThreshold  )
 {
+	if ( !graphDataYPropertyName )
+		graphDataYPropertyName = "y";
+
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
@@ -310,9 +313,13 @@ GraphDataPresenter.drawGraphData = function( context, pointSize, canvas, graphDa
 	var drawData = function(i0, i1)	
 		{
 			context.beginPath();
+			var graphDataPoint = { x:0, y:0 };
 			for ( var i=i0; i<=i1; i++ )
 			{
-				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+				graphDataPoint.x = graphData[i].x;
+				graphDataPoint.y = graphData[i][graphDataYPropertyName];
+
+				var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphDataPoint, graphDataWindow );
 				var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
 				context.lineTo(canvasPoint.x, canvasPoint.y);
 			}
@@ -322,7 +329,10 @@ GraphDataPresenter.drawGraphData = function( context, pointSize, canvas, graphDa
 			{
 				for ( var i=i0; i<=i1; i++ )
 				{
-					var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphData[i], graphDataWindow );
+					graphDataPoint.x = graphData[i].x;
+					graphDataPoint.y = graphData[i][graphDataYPropertyName];
+				
+					var windowPoint = GraphDataPresenter.graphDataPointToGraphWindowPoint( graphDataPoint, graphDataWindow );
 					var canvasPoint = GraphDataPresenter.graphWindowPointToCanvasPoint( windowPoint, canvas );
 					context.fillRect(canvasPoint.x-pointSize/2, canvasPoint.y-pointSize/2, pointSize, pointSize);		
 				}
