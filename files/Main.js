@@ -15,7 +15,7 @@ function Main()
 		width: 100 * (10*60),
 		height: 40
 	};
-	
+
 	var graphOptions = {
 		yPropertyName: 'temperature',
 		clearCanvas: true,
@@ -23,17 +23,17 @@ function Main()
 		drawDataRange: true,
 		drawDataGaps: true,
 		contiguityThreshold: 10.2 * 60,
-			
-/*		clearColor:'#FFFFFF',
-		dataRangeColor: "#EEEEEE",
-		dataGapsColor: "#EEEEEE",
-		axesLinesColor: "#AA6666",
-		primaryLinesTextColor: '#AA6666',
-		primaryLinesColor: '#FFAAAA',
-		secondaryLinesColor: '#FFDDDD',
-		dataLineColor: "#884444",
-		dataPointColor: "#884444",*/
-
+		/*colors: {
+			clear:'#FFFFFF',
+			dataRange: "#EEEEEE",
+			dataGaps: "#EEEEEE",
+			axesLines: "#AA6666",
+			primaryLinesText: '#AA6666',
+			primaryLines: '#FFAAAA',
+			secondaryLines: '#FFDDDD',
+			dataLine: "#884444",
+			dataPoint: "#884444",
+		},*/
 		getPrimaryLinesTextX: GraphDataPresenter.getLinesTextForTime, 
 		getPrimaryLinesSpacingX: GraphDataPresenter.getPrimaryLinesSpacingForTime,
 		getSecondaryLinesSpacingX: GraphDataPresenter.getSecondaryLinesSpacingForTime,
