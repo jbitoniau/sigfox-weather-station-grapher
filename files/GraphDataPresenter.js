@@ -400,6 +400,34 @@ GraphDataPresenter.getDayWithPeriodText = function(value)
 {
 	return GraphDataPresenter.getDayText(value, true);
 };
+ 
+GraphDataPresenter.getWeekNumber = function(date)
+{
+	// http://www.epochconverter.com/weeknumbers
+	// http://techblog.procurios.nl/k/news/view/33796/14863/calculate-iso-8601-week-and-year-in-javascript.html
+	var target  = new Date(date.valueOf());
+    var dayNr   = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    var firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() != 4) {
+        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    var n = 1 + Math.ceil((firstThursday - target) / 604800000);
+    return n;
+};
+
+GraphDataPresenter.getWeekText = function(value)
+{
+	var pad = GraphDataPresenter.pad;
+	var numMilliseconds = value * 1000;
+	var date = new Date(numMilliseconds);
+	var week = GraphDataPresenter.getWeekNumber(date);
+	var month = pad( date.getUTCMonth()+1, 2);
+	var year = pad( date.getFullYear(), 4);
+	var text = 'Week #' + week + ' ' + month + '/' + year;
+	return text;
+};
 
 GraphDataPresenter.getMonthText = function(value)
 {
@@ -428,21 +456,6 @@ GraphDataPresenter.getYearText = function(value)
 	return text;
 };
 
-
-// // http://www.epochconverter.com/weeknumbers
-//http://techblog.procurios.nl/k/news/view/33796/14863/calculate-iso-8601-week-and-year-in-javascript.html
-// Date.prototype.getWeek = function () {
-//     var target  = new Date(this.valueOf());
-//     var dayNr   = (this.getDay() + 6) % 7;
-//     target.setDate(target.getDate() - dayNr + 3);
-//     var firstThursday = target.valueOf();
-//     target.setMonth(0, 1);
-//     if (target.getDay() != 4) {
-//         target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
-//     }
-//     return 1 + Math.ceil((firstThursday - target) / 604800000);
-// }
-
 GraphDataPresenter.timeSubdivisions = [
 	{ spacing:60, getText:GraphDataPresenter.getFullTimeText },					// 1 minute
 	{ spacing:10*60, getText:GraphDataPresenter.getFullTimeText },				// 10 minutes
@@ -451,7 +464,7 @@ GraphDataPresenter.timeSubdivisions = [
 	{ spacing:12*60*60, getText:GraphDataPresenter.getDayWithPeriodText },		// Half a day
 	{ spacing:24*60*60, getText:GraphDataPresenter.getDayText },				// A day
 	{ spacing:2*24*60*60, getText:GraphDataPresenter.getDayText },				// 2 days
-	{ spacing:7*24*60*60, getText:GraphDataPresenter.getDayText },				// 1 week
+	{ spacing:7*24*60*60, getText:GraphDataPresenter.getWeekText },				// 1 week
 	{ spacing:365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// An average month, taking into account leap years
 	{ spacing:3*365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// 3 average months
 	{ spacing:6*365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// 6 average months
