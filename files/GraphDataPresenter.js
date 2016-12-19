@@ -36,7 +36,7 @@ Segment.prototype.subtract = function( otherSegment )
 	return segments;
 };
 
-Segment.prototype.intersect = function( segment )
+/*Segment.prototype.intersect = function( segment )
 {
 	return [];
 };
@@ -44,7 +44,7 @@ Segment.prototype.intersect = function( segment )
 Segment.prototype.unite = function( segment )
 {
 	return [];
-};
+};*/
 
 /*
 	GraphDataPresenter
@@ -138,7 +138,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	context.strokeStyle = colors.dataLine || "#222222";
 	context.fillStyle = colors.dataPoint || "#222222";
 
-	var pointSize = 4;
+	var pointSize = 0;
 	/*var c = 100;
 	if ( contiguityThreshold )
 		c = contiguityThreshold;
