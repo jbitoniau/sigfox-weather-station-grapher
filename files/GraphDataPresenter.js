@@ -624,7 +624,11 @@ GraphDataPresenter.getSecondaryLinesSpacing = function( value0, value1, numMaxLi
 
 GraphDataPresenter.getLinesText = function( value, spacing )
 {
-	return value;
+	// Round the value to the nearest epsilon so a value with floating point inaccuracy doesn't 
+	// result in a super long base-10 text representation (for eg: 23.599999999999998)
+	var invEpsilon = 1e9;
+	var v = Math.round(value * invEpsilon) / invEpsilon;
+	return v;
 };
 
 GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getLinesSpacing, getLinesText, numMaxLines )
