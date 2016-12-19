@@ -47,15 +47,60 @@ var humidityData = graphDataFetcher._humidityData;
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
 	//graphController.render();
 
-	/*var zoomInButton = document.getElementById('graphZoomInButton');
-	zoomInButton.onclick = 
+	var graphDataType = 'temperature';
+
+	var buttons = {
+		'temperature' : document.getElementById('temperatureButton'),
+		'humidity' : document.getElementById('humidityButton'),
+		'pressure' : document.getElementById('pressureButton')
+	};
+	
+var onGraphDataTypeChanged = function(graphDataType)
+{
+
+};
+
+	for ( var t in buttons )
+	{
+		var button = buttons[t];
+		button.graphDataType = t;
+
+		button.onclick = function( event ) 
+			{	
+				var b = event.target;
+				if ( b.graphDataType===graphDataType )
+					return;
+				var prevButton = buttons[graphDataType];
+				prevButton.className = "roundedButton";
+				b.className = "roundedButtonToggled";
+				graphDataType = b.graphDataType;
+
+				onGraphDataTypeChanged(graphDataType);
+			};
+	}
+
+	buttons[graphDataType].className = "roundedButtonToggled";
+
+
+	/*temperatureButton.onclick = 
 		function( event ) 
 		{
-			graphController.zoom( 0.8, null, 'x' );
-			graphController.render();
+			graphDataType
+			temperatureButton.className = "roundedButtonToggled";
+			//graphController.zoom( 0.8, null, 'x' );
+			//graphController.render();
 		};
 
-	var zoomOutButton = document.getElementById('graphZoomOutButton');
+	humidityButton.onclick = 
+		function( event ) 
+		{
+			humidityButton.className = "roundedButtonToggled";
+			
+			//graphController.zoom( 0.8, null, 'x' );
+			//graphController.render();
+		};
+
+	/*var zoomOutButton = document.getElementById('graphZoomOutButton');
 	zoomOutButton.onclick = 
 		function( event ) 
 		{
@@ -116,59 +161,59 @@ var humidityData = graphDataFetcher._humidityData;
 
 	graphController._onRendered = function()
 		{
-			var graphDataWindow2 = {
-					x: graphDataWindow.x,
-					y: 950, 
-					width: graphDataWindow.width,
-					height: 150
-				};
+			// var graphDataWindow2 = {
+			// 		x: graphDataWindow.x,
+			// 		y: 950, 
+			// 		width: graphDataWindow.width,
+			// 		height: 150
+			// 	};
 
-			var graphOptions2 = {
-				clearCanvas: false,
-				drawOriginAxes: false,
-				drawDataRange: false,
-				drawDataGaps: false,
-				contiguityThreshold: 10.2* 60,
+			// var graphOptions2 = {
+			// 	clearCanvas: false,
+			// 	drawOriginAxes: false,
+			// 	drawDataRange: false,
+			// 	drawDataGaps: false,
+			// 	contiguityThreshold: 10.2* 60,
 				
-				axesLinesColor: "#66AA66",
-				primaryLinesTextColor: '#66AA66',
-				primaryLinesColor: '#AAFFAA',
-				secondaryLinesColor: '#DDFFDD',
-				dataLineColor: "#448844",
-				dataPointColor: "#448844",
+			// 	axesLinesColor: "#66AA66",
+			// 	primaryLinesTextColor: '#66AA66',
+			// 	primaryLinesColor: '#AAFFAA',
+			// 	secondaryLinesColor: '#DDFFDD',
+			// 	dataLineColor: "#448844",
+			// 	dataPointColor: "#448844",
 
-				getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
-				getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-				//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
-			};
-			//GraphDataPresenter.render( canvas, pressureData, graphDataWindow2, graphOptions2 );
+			// 	getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
+			// 	getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
+			// 	//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
+			// };
+			// //GraphDataPresenter.render( canvas, pressureData, graphDataWindow2, graphOptions2 );
 
-			var graphDataWindow3 = {
-				x: graphDataWindow.x,
-				y: 0, 
-				width: graphDataWindow.width,
-				height: 100
-			};
+			// var graphDataWindow3 = {
+			// 	x: graphDataWindow.x,
+			// 	y: 0, 
+			// 	width: graphDataWindow.width,
+			// 	height: 100
+			// };
 
-			var graphOptions3 = {
-				clearCanvas: false,
-				drawOriginAxes: false,
-				drawDataRange: false,
-				drawDataGaps: false,
-				contiguityThreshold: 10.2* 60,
+			// var graphOptions3 = {
+			// 	clearCanvas: false,
+			// 	drawOriginAxes: false,
+			// 	drawDataRange: false,
+			// 	drawDataGaps: false,
+			// 	contiguityThreshold: 10.2* 60,
 
-				axesLinesColor: "#6666AA",
-				primaryLinesTextColor: '#6666AA',
-				primaryLinesColor: '#AAAAFF',
-				secondaryLinesColor: '#DDDDFF',
-				dataLineColor: "#444488",
-				dataPointColor: "#444488",
+			// 	axesLinesColor: "#6666AA",
+			// 	primaryLinesTextColor: '#6666AA',
+			// 	primaryLinesColor: '#AAAAFF',
+			// 	secondaryLinesColor: '#DDDDFF',
+			// 	dataLineColor: "#444488",
+			// 	dataPointColor: "#444488",
 
-				getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
-				getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-				//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
-			};
-			GraphDataPresenter.render( canvas, humidityData, graphDataWindow3, graphOptions3 );
+			// 	getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
+			// 	getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
+			// 	//getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
+			// };
+			// GraphDataPresenter.render( canvas, humidityData, graphDataWindow3, graphOptions3 );
 		};	
 
 
