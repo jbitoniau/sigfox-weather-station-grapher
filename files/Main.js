@@ -6,17 +6,16 @@ function Main()
 	canvas.focus();
 
 	var graphDataFetcher = new GraphDataFetcher('1D80C', 100);
+	
 	var graphData = graphDataFetcher._graphData;
 
 	var graphDataWindow = {
-		x: 0,		// 1st of January 1970! 
-	y: -5,
-//		y: 950,
+		x: 0,
+		y: -5,
 		width: 100 * (10*60),
-//		height: 150
-			height: 40
+		height: 40
 	};
-
+	
 	var graphOptions = {
 		yPropertyName: 'temperature',
 		clearCanvas: true,
@@ -52,8 +51,8 @@ function Main()
 		'humidity' : document.getElementById('humidityButton'),
 		'pressure' : document.getElementById('pressureButton')
 	};
-		
-	/*var graphDataWindows = {
+
+	var graphDataWindows = {
 		'temperature' : {
 			x: 0,	
 			y: -5,
@@ -72,11 +71,15 @@ function Main()
 			width: 100 * (10*60),
 			height: 150
 		}
-	};*/
+	};
 
-	var onGraphDataTypeChanged = function(graphDataType)
+	var onGraphDataTypeChanged = function(prevGraphDataType, nextGraphDataType)
 	{
-		graphOptions.yPropertyName = graphDataType;
+		graphOptions.yPropertyName = nextGraphDataType;
+
+		graphDataWindow.y = graphDataWindows[nextGraphDataType].y;
+		graphDataWindow.height = graphDataWindows[nextGraphDataType].height;
+
 		graphController.render();
 	};
 
@@ -90,12 +93,16 @@ function Main()
 				var b = event.target;
 				if ( b.graphDataType===graphDataType )
 					return;
-				var prevButton = buttons[graphDataType];
+
+				var prevGraphDataType = graphDataType;
+				var prevButton = buttons[prevGraphDataType];
 				prevButton.className = "roundedButton";
+				
 				b.className = "roundedButtonToggled";
+				
 				graphDataType = b.graphDataType;
 
-				onGraphDataTypeChanged(graphDataType);
+				onGraphDataTypeChanged(prevGraphDataType, graphDataType);
 			};
 	}
 
@@ -156,7 +163,6 @@ function Main()
 	graphController._onRendered = function()
 		{
 		};	
-
 
 	window.addEventListener( "resize", function(event) 
 		{	
