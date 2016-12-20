@@ -178,7 +178,7 @@ Tempmon.prototype._updateLinesOptions = function()
 	
 	// Based on the aspect ratio of the canvas and max number of lines on X,
 	// we calculate a max number of linex on the Y axis so it looks balanced
-	var numMaxLinesY = Math.floor( height / maxTextWidth );
+	var numMaxLinesY = Math.floor( height / (maxTextWidth*0.7) );		// We can fit more y-lines than x-lines hence the 0.7 factor
 
 	this._graphOptions.numMaxLinesX = numMaxLinesX;
 	this._graphOptions.numMaxLinesY = numMaxLinesY;
