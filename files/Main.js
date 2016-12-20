@@ -42,7 +42,13 @@ function Main()
 		getSecondaryLinesSpacingX: GraphDataPresenter.getSecondaryLinesSpacingForTime,
 		getPrimaryLinesTextY: GraphDataPresenter.getLinesText,
 		getPrimaryLinesSpacingY: GraphDataPresenter.getLinesSpacing,
-		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
+		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing,
+
+		points: {
+			//typicalDataPointXSpacing: 10,		// No need if we provide a contiguityThreshold
+			maxPointSize: 5,
+			maxNumPoints: 500,
+		}
 	};
 
 	var calculateBestNumLines = function()
@@ -62,10 +68,16 @@ function Main()
 			// Based on the aspect ratio of the canvas and max number of lines on X,
 			// we calculate a max number of linex on the Y axis so it looks balanced
 			graphOptions.numMaxLinesY = Math.floor( h / maxTextWidth );
-			console.log( graphOptions.numMaxLinesX + " " + graphOptions.numMaxLinesY );
+		};
+
+	var calculateBestPointsOptions = function()
+		{
+			var w = canvas.clientWidth;
+			graphOptions.points.maxNumPoints = Math.trunc( w * 0.3 );
 		};
 
 	calculateBestNumLines();
+	calculateBestPointsOptions();
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
 
@@ -194,6 +206,7 @@ function Main()
 	window.addEventListener( "resize", function(event) 
 		{	
 			calculateBestNumLines();
+			calculateBestPointsOptions();
 			graphController.render();
 		});
 }

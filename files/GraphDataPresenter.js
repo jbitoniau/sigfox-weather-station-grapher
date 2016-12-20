@@ -139,18 +139,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	// Data 
 	context.strokeStyle = colors.dataLine || "#222222";
 	context.fillStyle = colors.dataPoint || "#222222";
-
-	var pointSize = 0;
-	/*var c = 100;
-	if ( contiguityThreshold )
-		c = contiguityThreshold;
-	var n = graphDataWindow.width / contiguityThreshold;
-	if ( n<100 )
-		pointSize = 4;
-	else if ( n<200 )
-		pointSize = 2;*/
-
-	GraphDataPresenter.drawGraphData( context, pointSize, canvas, graphDataWindow, graphData, graphOptions.yPropertyName, graphOptions.contiguityThreshold );
+	GraphDataPresenter.drawGraphData( context, canvas, graphDataWindow, graphData, graphOptions.yPropertyName, graphOptions.contiguityThreshold, graphOptions.points );
 };
 
 GraphDataPresenter.drawGraphDataRange = function( context, canvas, graphDataWindow, graphData )
@@ -304,15 +293,30 @@ GraphDataPresenter.drawGraphDataGaps = function( context, canvas, graphDataWindo
 	GraphDataPresenter.parseGraphData( graphData, contiguityThreshold, null, onMissingDataRange, r.i0, n );
 };
 
-GraphDataPresenter.drawGraphData = function( context, pointSize, canvas, graphDataWindow, graphData, graphDataYPropertyName, contiguityThreshold  )
+GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, graphData, graphDataYPropertyName, contiguityThreshold, pointsOptions  )
 {
 	if ( !graphDataYPropertyName )
 		graphDataYPropertyName = "y";
 
+	// Calculate the size of points based on their estimate number in the current graph data window
+	var pointSize = 0;
+	pointsOptions = pointsOptions || {};
+	var dataPointXSpacing = pointsOptions.typicalDataPointXSpacing || contiguityThreshold;
+	if ( dataPointXSpacing )
+	{
+		var numPoints = Math.trunc( graphDataWindow.width / dataPointXSpacing );
+		var maxPointSize = pointsOptions.maxPointSize || 5;
+		var maxNumPoints = pointsOptions.maxNumPoints || 300;		// Beyond this number, points won't be displayed
+		if ( numPoints<maxNumPoints )
+		{	
+			pointSize = maxPointSize * ( (maxNumPoints-numPoints) / maxNumPoints);
+		}
+	}
+
+	// Determine the start and end indices of graph data that are visible in current graph data window
 	var r = GraphDataPresenter.getGraphDataVisibleRange( graphDataWindow, graphData );
 	if ( r===null )
 		return;
-
 	var n = r.i1-r.i0+1;
 
 	var drawData = function(i0, i1)	
