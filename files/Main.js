@@ -34,6 +34,9 @@ function Main()
 			dataLine: "#884444",
 			dataPoint: "#884444",
 		},*/
+		textSize: 12,
+		numMaxLinesX: 5,
+		numMaxLinesY: 5,
 		getPrimaryLinesTextX: GraphDataPresenter.getLinesTextForTime, 
 		getPrimaryLinesSpacingX: GraphDataPresenter.getPrimaryLinesSpacingForTime,
 		getSecondaryLinesSpacingX: GraphDataPresenter.getSecondaryLinesSpacingForTime,

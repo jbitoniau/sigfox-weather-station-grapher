@@ -88,28 +88,31 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	}
 
 	// Secondary grid lines
+	var numMaxLinesX = graphOptions.numMaxLinesX || 7;
+	var numMaxLinesY = graphOptions.numMaxLinesY || 5;
 	if ( graphOptions.getSecondaryLinesSpacingX )
 	{
 		context.strokeStyle = colors.secondaryLines || "#DDDDDD";
-		GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, 7 );
+		var spacing = graphOptions.numMaxLinesX || 7;
+		GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, numMaxLinesX );
 	}
 	if ( graphOptions.getSecondaryLinesSpacingY )
 	{
 		context.strokeStyle = colors.secondaryLines || "#DDDDDD";
-		GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingY, null, 5 );
+		GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingY, null, numMaxLinesY );
 	}
 	
 	// Primary grid lines
 	if ( graphOptions.getPrimaryLinesTextX || graphOptions.getPrimaryLinesTextY )
 	{
-		var textSize = 14; 
-		context.strokeStyle = colors.primaryLines || "#BBBBBB";
+		var textSize = graphOptions.textSize || 14;
 		context.font = textSize + "px sans-serif";
+		context.strokeStyle = colors.primaryLines || "#AAAAAA";
 		context.fillStyle = colors.primaryLinesText || "#888888";
 		if ( graphOptions.getPrimaryLinesSpacingX )
-			GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingX, graphOptions.getPrimaryLinesTextX, 7 );
+			GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingX, graphOptions.getPrimaryLinesTextX, numMaxLinesX );
 		if ( graphOptions.getPrimaryLinesSpacingY )
-			GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingY, graphOptions.getPrimaryLinesTextY, 5 );
+			GraphDataPresenter.drawLinesY( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingY, graphOptions.getPrimaryLinesTextY, numMaxLinesY );
 	}
 
 	// Origin axes
