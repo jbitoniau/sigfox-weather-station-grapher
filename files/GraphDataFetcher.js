@@ -32,7 +32,7 @@ GraphDataFetcher.prototype.xminFinalReached = function()
 	return this._xminFinalReached;
 };
 
-GraphDataFetcher.prototype.fetchData = function( beforeTimeInSeconds )
+GraphDataFetcher.prototype.fetchData = function( beforeTimeInMilliseconds )
 {
 	if ( this.isFetching() )
 		return Promise.reject();
@@ -42,10 +42,11 @@ GraphDataFetcher.prototype.fetchData = function( beforeTimeInSeconds )
 		if ( beforeTime<=this._xmin )
 			return Promise.reject();
 	}
-	
+
 	var uri = '/api/devices/' + this._deviceID + '/messages?limit=' + this._limit;
-	if ( beforeTimeInSeconds!==null && beforeTimeInSeconds!==undefined )
+	if ( beforeTimeInMilliseconds!==null && beforeTimeInMilliseconds!==undefined )
 	{
+		var beforeTimeInSeconds = Math.floor( beforeTimeInMilliseconds / 1000 );
 		uri += '&before=' + beforeTimeInSeconds;
 	}
 

@@ -159,7 +159,7 @@ function Main()
 			{
 				if ( !graphDataFetcher.isFetching() && !graphDataFetcher.xminFinalReached() )
 				{		
-					var promise = graphDataFetcher.fetchData( Math.floor(xmin/1000) )
+					var promise = graphDataFetcher.fetchData( xmin )
 						.then(
 							function()
 							{
