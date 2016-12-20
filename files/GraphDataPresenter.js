@@ -313,18 +313,108 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 };
 
 GraphDataPresenter.timeSubdivisions = [
-	{ spacing:60, getText:DateHelper.getFullTimeText },					// 1 minute
-	{ spacing:10*60, getText:DateHelper.getFullTimeText },				// 10 minutes
-	{ spacing:60*60, getText:DateHelper.getFullTimeText },				// 1 hour
-	{ spacing:6*60*60, getText:DateHelper.getFullTimeText },			// 6 hour
-	{ spacing:12*60*60, getText:DateHelper.getDayWithPeriodText },		// Half a day
-	{ spacing:24*60*60, getText:DateHelper.getDayText },				// A day
-	{ spacing:2*24*60*60, getText:DateHelper.getDayText },				// 2 days
-	{ spacing:7*24*60*60, getText:DateHelper.getWeekText },				// 1 week
-	{ spacing:365.25/12*24*60*60, getText:DateHelper.getMonthText }, 	// An average month, taking into account leap years
-	{ spacing:3*365.25/12*24*60*60, getText:DateHelper.getMonthText }, 	// 3 average months
-	{ spacing:6*365.25/12*24*60*60, getText:DateHelper.getMonthText }, 	// 6 average months
-	{ spacing:365.25*24*60*60, getText:DateHelper.getYearText }			// An average year, taking into account leap years 
+	{
+		// 1 minute
+		spacing: 60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getFullTimeText( new Date(value) );
+		}
+	},
+
+	{
+		// 10 minutes
+		spacing: 10*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getFullTimeText( new Date(value) );
+		}
+	},
+
+	{
+		// 1 hour
+		spacing: 60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getFullTimeText( new Date(value) );
+		}
+	},
+
+	{
+		// 6 hours
+		spacing: 6*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getFullTimeText( new Date(value) );
+		}
+	},
+
+	{
+		// Half a day
+		spacing: 12*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getDayWithPeriodText( new Date(value) );
+		}
+	},
+
+	{
+		// 1 day
+		spacing: 24*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getDayText( new Date(value) );
+		}
+	},
+
+	{
+		// 2 days
+		spacing: 2*24*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getDayText( new Date(value) );
+		}
+	},
+
+	{
+		// 1 week
+		spacing: 7*24*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getWeekText( new Date(value) );
+		}
+	},
+
+	{
+		// An average month (taking into account leap years)
+		spacing: 365.25/12*24*60*60*1000, 			
+		getText: function(value) { 
+			value += (365.25/12*24*60*60*1000)/2;			// See getYearText for explanation about this type of gross hack!				 
+			return DateHelper.getMonthText( new Date(value) );
+		}
+	},
+
+	{
+		// 3 average months
+		spacing: 3*365.25/12*24*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getMonthText( new Date(value) );
+		}
+	},
+
+	{
+		// Half an average year
+		spacing: 6*365.25/12*24*60*60*1000, 			
+		getText: function(value) { 
+			return DateHelper.getMonthText( new Date(value) );
+		}
+	},
+
+	{
+		// 1 average year
+		spacing: 365.25*24*60*60*1000, 			
+		getText: function(value) { 
+			// We know this method will be used only for 1st of January time values,
+			// but these values won't be exactly that because we define a year as an average 
+			// number of seconds (which is wrong!). So we cheat to correct this by offsetting 
+			// the value by half a year, so we're sure we'll be right in the middle of the proper year!
+			value += (365.25*24*60*60*1000)/2;
+			var date = new Date(value);
+			return date.getFullYear();
+		}
+	}
 ];
 
 GraphDataPresenter.getBestTimeSubdivisionIndex = function( valueRange, numMaxLines )	

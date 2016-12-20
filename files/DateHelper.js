@@ -53,10 +53,8 @@ DateHelper.pad = function(n, width, z)
 };
 
 // 13:49:05 20/12/2016
-DateHelper.getFullTimeText = function(value)		
+DateHelper.getFullTimeText = function(date)		
 {
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
 	var hour = DateHelper.pad( date.getUTCHours(), 2 );
 	var minute = DateHelper.pad( date.getUTCMinutes(), 2);
 	var second = DateHelper.pad( date.getUTCSeconds(), 2);
@@ -67,10 +65,8 @@ DateHelper.getFullTimeText = function(value)
 };
 
 // Tuesday 20/12/2016 AM 
-DateHelper.getDayText = function(value, showPeriod)		
+DateHelper.getDayText = function(date, showPeriod)		
 {
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
 	var dayOfWeekName = DateHelper.getDayOfWeekName( date.getUTCDay() );
 	var day = DateHelper.pad( date.getUTCDate(), 2);
 	var month = DateHelper.pad( date.getUTCMonth()+1, 2);
@@ -86,16 +82,14 @@ DateHelper.getDayText = function(value, showPeriod)
 };
 
 // Tuesday 20/12/2016 AM 
-DateHelper.getDayWithPeriodText = function(value)		
+DateHelper.getDayWithPeriodText = function(date)		
 {
-	return DateHelper.getDayText(value, true);
+	return DateHelper.getDayText(date, true);
 };
 
-// Dec. 2016 Week #52
-DateHelper.getWeekText = function(value)				
+// Dec. 2016 Week #50
+DateHelper.getWeekText = function(date)				
 {
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
 	var week = DateHelper.getWeekNumber(date);
 	var monthName = DateHelper.getShortMonthName( date.getUTCMonth() );
 	var text = monthName + '. ' + date.getFullYear() + ' Week #' + week;
@@ -103,26 +97,9 @@ DateHelper.getWeekText = function(value)
 };
 
 // December 2016
-DateHelper.getMonthText = function(value)				
+DateHelper.getMonthText = function(date)				
 {
-	value += (365.25/12*24*60*60) / 2;			// See getYearText for this gross hack!				 
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
 	var monthName = DateHelper.getMonthName( date.getUTCMonth() );
 	var text = monthName + ' ' + date.getFullYear();
 	return text;
 };
-
-// 2016
-DateHelper.getYearText = function(value)
-{	
-	// We know this method will be used only for 1st of January time values,
-	// but these values won't be exactly that because we define a year as an average number of seconds (which is wrong!)
-	// So we cheat to correct this by offsetting the value by half a year, so we're sure we'll be right in the middle of the proper year!
-	value += (365.25*24*60*60) / 2;						 
-	var numMilliseconds = value * 1000;	
-	var date = new Date(numMilliseconds);
-	var text = date.getFullYear();
-	return text;
-};
-

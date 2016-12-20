@@ -9,10 +9,13 @@ function Main()
 	
 	var graphData = graphDataFetcher._graphData;
 
+	var initialWidth = 100*10*60*1000;		// About 100 SigFox message (each message is 10 minute appart)
+	var initialX = new Date().getTime() - initialWidth*0.9;
+	
 	var graphDataWindow = {
-		x: 0,
-		y: -5,
-		width: 100 * (10*60),
+		x: initialX,
+		y: -4,
+		width: initialWidth,
 		height: 40
 	};
 
@@ -22,7 +25,7 @@ function Main()
 		drawOriginAxes: true,
 		drawDataRange: true,
 		drawDataGaps: true,
-		contiguityThreshold: 10.2 * 60,
+		contiguityThreshold: 10.2*60*1000,		// A little bit more than 10 minutes
 		/*colors: {
 			clear:'#FFFFFF',
 			dataRange: "#EEEEEE",
@@ -45,7 +48,7 @@ function Main()
 		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing,
 
 		points: {
-			//typicalDataPointXSpacing: 10,		// No need if we provide a contiguityThreshold
+			//typicalDataPointXSpacing: 10*60*1000,		// No need if we provide a contiguityThreshold
 			maxPointSize: 5,
 			maxNumPoints: 500,
 		}
@@ -80,6 +83,7 @@ function Main()
 	calculateBestPointsOptions();
 
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
+	graphController.render();
 
 	var graphDataType = 'temperature';
 
@@ -93,19 +97,19 @@ function Main()
 		'temperature' : {
 			x: 0,	
 			y: -5,
-			width: 100 * (10*60),
+			width: 100 * (10*60*1000),
 			height: 40
 		},
 		'humidity' : {
 			x: 0,	
 			y: -5,
-			width: 100 * (10*60),
+			width: 100 * (10*60*1000),
 			height: 105
 		},
 		'pressure' : {
 			x: 0,	
 			y: 950,
-			width: 100 * (10*60),
+			width: 100 * (10*60*1000),
 			height: 150
 		}
 	};
@@ -148,34 +152,14 @@ function Main()
 	buttons[graphDataType].className = "roundedButtonToggled";
 	graphOptions.yPropertyName = graphDataType;
 
-	var promise = graphDataFetcher.fetchData()
-		.then(
-			function()
-			{
-				// Move graph window to last data point if there's any data at all
-				if ( graphData.length>0 )
-				{
-					graphDataWindow.x = graphData[0].x - 90 *10*60;
-				}
-				graphController.render();
-			})
-		.catch(
-			function( error )
-			{
-				alert( error.toString() );
-			});
-
 	var fetchDataIfNeeded = function()
 		{
-			var xminData = graphDataFetcher._xmin;
-			if ( xminData===null )
-				return Promise.resolve();
-
-			if ( graphDataWindow.x<xminData )
+			var xmin = graphDataFetcher._xmin;
+			if ( xmin===null || graphDataWindow.x<xmin )
 			{
 				if ( !graphDataFetcher.isFetching() && !graphDataFetcher.xminFinalReached() )
 				{		
-					var promise = graphDataFetcher.fetchData(xminData)
+					var promise = graphDataFetcher.fetchData( Math.floor(xmin/1000) )
 						.then(
 							function()
 							{
@@ -209,4 +193,6 @@ function Main()
 			calculateBestPointsOptions();
 			graphController.render();
 		});
+
+	fetchDataIfNeeded();
 }

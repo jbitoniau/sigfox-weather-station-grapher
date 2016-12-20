@@ -15,10 +15,10 @@ function GraphDataFetcher(deviceID, limit)
 {
 	this._deviceID = deviceID;
 	this._limit = limit;
-	this._graphData = [];		// An array of {x:<epoch time in sec>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
-	this._xmin = null;
-	this._xminFinalReached = false;
+	this._graphData = [];		// An array of {x:<epoch time in milliseconds>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
+	this._xmin = null;			// In milliseconds
 	this._xmax = null;
+	this._xminFinalReached = false;
 	this._promiseInProgress = null;
 }
 
@@ -32,7 +32,7 @@ GraphDataFetcher.prototype.xminFinalReached = function()
 	return this._xminFinalReached;
 };
 
-GraphDataFetcher.prototype.fetchData = function( beforeTime )
+GraphDataFetcher.prototype.fetchData = function( beforeTimeInSeconds )
 {
 	if ( this.isFetching() )
 		return Promise.reject();
@@ -42,11 +42,11 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 		if ( beforeTime<=this._xmin )
 			return Promise.reject();
 	}
-
+	
 	var uri = '/api/devices/' + this._deviceID + '/messages?limit=' + this._limit;
-	if ( beforeTime!==null && beforeTime!==undefined )
+	if ( beforeTimeInSeconds!==null && beforeTimeInSeconds!==undefined )
 	{
-		uri += '&before=' + beforeTime;
+		uri += '&before=' + beforeTimeInSeconds;
 	}
 
 	var promise = HttpRequest.request( uri, 'GET')
@@ -91,22 +91,22 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 						//var date = new Date( numSecondsSinceEpoch * 1000 );
 						var weatherData = getWeatherDataFromUint8Array( createUint8ArrayFromMessageString( message.data ) );
 
-						var x = message.time;
+						var x = message.time * 1000;	// SigFox message timestamp is in seconds. Here we work in milliseconds 
 						if ( weatherData.temperature<-100 || weatherData.temperature>100 )
 						{ 
-							console.warn("Invalid temperature: " + weatherData.temperature + " at time " + x );
+							console.warn("Invalid temperature: " + weatherData.temperature + " at time " + new Date(x) );
 							weatherData.temperature = 0;
 						}
 
 						if ( weatherData.humidity<0 || weatherData.humidity>100 )
 						{ 
-							console.warn("Invalid humidity: " + weatherData.humidity + " at time " + x );
+							console.warn("Invalid humidity: " + weatherData.humidity + " at time " + new Date(x) );
 							weatherData.humidity = 0;
 						}
 
 						if ( weatherData.pressure<900 || weatherData.pressure>1200 )
 						{ 
-							console.warn("Invalid pressure: " + weatherData.pressure + " at time " + x );
+							console.warn("Invalid pressure: " + weatherData.pressure + " at time " + new Date(x) );
 							weatherData.pressure = 0;
 						}
 
