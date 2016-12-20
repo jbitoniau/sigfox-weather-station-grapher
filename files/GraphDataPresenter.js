@@ -358,124 +358,19 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 	}
 };
 
-///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
-GraphDataPresenter.pad = function(n, width, z) 
-{
-	z = z || '0';
-	n = n + '';
-	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
-};
-
-GraphDataPresenter.getFullTimeText = function(value)
-{
-	var pad = GraphDataPresenter.pad;
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
-	var hour = pad( date.getUTCHours(), 2 );
-	var minute = pad( date.getUTCMinutes(), 2);
-	var second = pad( date.getUTCSeconds(), 2);
-	var day = pad( date.getUTCDate(), 2);			// UTC date starts at 1
-	var month = pad( date.getUTCMonth()+1, 2);		// UTC month starts at 0 for January
-	var year = pad( date.getFullYear(), 4);
-	var text = hour + ':' + minute + '.' + second + ' ' + day + '/' + month + '/' + year;
-	return text;
-};
-
-GraphDataPresenter.getDayText = function(value, showPeriod)
-{
-	var daysOfWeekNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-	var pad = GraphDataPresenter.pad;
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
-	var dayOfWeek = daysOfWeekNames[date.getUTCDay()];
-	var day = pad( date.getUTCDate(), 2);
-	var month = pad( date.getUTCMonth()+1, 2);
-	var year = pad( date.getFullYear(), 4);
-	var period = '';		
-	if ( date.getUTCHours()<12 )		// https://en.wikipedia.org/wiki/12-hour_clock
-		period = 'AM';
-	else
-		period = 'PM';
-	var text = dayOfWeek + ' ' + day + '/' + month + '/' + year;
-	if ( showPeriod )
-		text +=  ' ' + period;
-	return text;
-};
-
-GraphDataPresenter.getDayWithPeriodText = function(value)
-{
-	return GraphDataPresenter.getDayText(value, true);
-};
- 
-GraphDataPresenter.getWeekNumber = function(date)
-{
-	// http://www.epochconverter.com/weeknumbers
-	// http://techblog.procurios.nl/k/news/view/33796/14863/calculate-iso-8601-week-and-year-in-javascript.html
-	var target  = new Date(date.valueOf());
-    var dayNr   = (date.getDay() + 6) % 7;
-    target.setDate(target.getDate() - dayNr + 3);
-    var firstThursday = target.valueOf();
-    target.setMonth(0, 1);
-    if (target.getDay() != 4) {
-        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
-    }
-    var n = 1 + Math.ceil((firstThursday - target) / 604800000);
-    return n;
-};
-
-GraphDataPresenter.getWeekText = function(value)
-{
-	var pad = GraphDataPresenter.pad;
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
-	var week = GraphDataPresenter.getWeekNumber(date);
-	var monthShortNames = ['Jan','Feb','Mar','Apr','May','June','July','Aug','Sept','Oct','Nov','Dec'];
-	var month = monthShortNames[date.getUTCMonth()];
-	var year = pad( date.getFullYear(), 4);
-	var text = month + '. ' + year + ' Week #' + week;
-	return text;
-};
-
-GraphDataPresenter.getMonthText = function(value)
-{
-	// See getYearText for this gross hack!
-	value += (365.25/12*24*60*60) / 2;						 
-	var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-	var pad = GraphDataPresenter.pad;
-	var numMilliseconds = value * 1000;
-	var date = new Date(numMilliseconds);
-	var month = monthNames[date.getUTCMonth()];
-	var year = pad( date.getFullYear(), 4);
-	var text = month + ' ' + year;
-	return text;
-};
-
-GraphDataPresenter.getYearText = function(value)
-{	
-	// We know this method will be used only for 1st of January time values,
-	// but these values won't be exactly that because we define a year as an average number of seconds (which is wrong!)
-	// So we cheat to correct this by offsetting the value by half a year, so we're sure we'll be right in the middle of the proper year!
-	value += (365.25*24*60*60) / 2;						 
-	var pad = GraphDataPresenter.pad;
-	var numMilliseconds = value * 1000;	
-	var date = new Date(numMilliseconds);
-	var text = pad( date.getFullYear(), 4);
-	return text;
-};
-
 GraphDataPresenter.timeSubdivisions = [
-	{ spacing:60, getText:GraphDataPresenter.getFullTimeText },					// 1 minute
-	{ spacing:10*60, getText:GraphDataPresenter.getFullTimeText },				// 10 minutes
-	{ spacing:60*60, getText:GraphDataPresenter.getFullTimeText },				// 1 hour
-	{ spacing:6*60*60, getText:GraphDataPresenter.getFullTimeText },			// 6 hour
-	{ spacing:12*60*60, getText:GraphDataPresenter.getDayWithPeriodText },		// Half a day
-	{ spacing:24*60*60, getText:GraphDataPresenter.getDayText },				// A day
-	{ spacing:2*24*60*60, getText:GraphDataPresenter.getDayText },				// 2 days
-	{ spacing:7*24*60*60, getText:GraphDataPresenter.getWeekText },				// 1 week
-	{ spacing:365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// An average month, taking into account leap years
-	{ spacing:3*365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// 3 average months
-	{ spacing:6*365.25/12*24*60*60, getText:GraphDataPresenter.getMonthText }, 	// 6 average months
-	{ spacing:365.25*24*60*60, getText:GraphDataPresenter.getYearText }			// An average year, taking into account leap years 
+	{ spacing:60, getText:DateHelper.getFullTimeText },					// 1 minute
+	{ spacing:10*60, getText:DateHelper.getFullTimeText },				// 10 minutes
+	{ spacing:60*60, getText:DateHelper.getFullTimeText },				// 1 hour
+	{ spacing:6*60*60, getText:DateHelper.getFullTimeText },			// 6 hour
+	{ spacing:12*60*60, getText:DateHelper.getDayWithPeriodText },		// Half a day
+	{ spacing:24*60*60, getText:DateHelper.getDayText },				// A day
+	{ spacing:2*24*60*60, getText:DateHelper.getDayText },				// 2 days
+	{ spacing:7*24*60*60, getText:DateHelper.getWeekText },				// 1 week
+	{ spacing:365.25/12*24*60*60, getText:DateHelper.getMonthText }, 	// An average month, taking into account leap years
+	{ spacing:3*365.25/12*24*60*60, getText:DateHelper.getMonthText }, 	// 3 average months
+	{ spacing:6*365.25/12*24*60*60, getText:DateHelper.getMonthText }, 	// 6 average months
+	{ spacing:365.25*24*60*60, getText:DateHelper.getYearText }			// An average year, taking into account leap years 
 ];
 
 GraphDataPresenter.getBestTimeSubdivisionIndex = function( valueRange, numMaxLines )	
@@ -709,13 +604,6 @@ GraphDataPresenter.drawLinesX = function( context, canvas, graphDataWindow, getL
 		}
 	}
 }
-
-GraphDataPresenter.isInUnitSquare = function( point )
-{
-	if ( point.x<0 || point.y<0 || point.x>=1 || point.y>=1 )
-		return false;
-	return true;
-};
 
 GraphDataPresenter.graphDataPointToCanvasPoint = function( graphDataPoint, graphDataWindow, canvas )
 {
