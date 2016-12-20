@@ -88,12 +88,11 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	}
 
 	// Secondary grid lines
-	var numMaxLinesX = graphOptions.numMaxLinesX || 7;
+	var numMaxLinesX = graphOptions.numMaxLinesX || 5;
 	var numMaxLinesY = graphOptions.numMaxLinesY || 5;
 	if ( graphOptions.getSecondaryLinesSpacingX )
 	{
 		context.strokeStyle = colors.secondaryLines || "#DDDDDD";
-		var spacing = graphOptions.numMaxLinesX || 7;
 		GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getSecondaryLinesSpacingX, null, numMaxLinesX );
 	}
 	if ( graphOptions.getSecondaryLinesSpacingY )
