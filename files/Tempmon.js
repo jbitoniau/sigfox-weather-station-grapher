@@ -3,10 +3,10 @@
 /*
 	Tempmon
 */	
-function Tempmon( canvas )
+function Tempmon( canvas, deviceID )
 {
 	// The object that knows how to get data from SigFox backend
-	this._graphDataFetcher = new GraphDataFetcher('1D80C', 100);
+	this._graphDataFetcher = new GraphDataFetcher(deviceID, 100);
 
 	// The type of graph data currently being displayed
 	this._graphDataType = 'temperature';
@@ -120,26 +120,25 @@ Tempmon.prototype.setGraphDataType = function( graphDataType )
 Tempmon.prototype._fetchDataIfNeeded = function()
 {
 	var graphDataFetcher = this._graphDataFetcher;
-	var xmin = graphDataFetcher._xmin;
-	if ( xmin===null || this._graphDataWindow.x<xmin )
-	{
-		if ( !graphDataFetcher.isFetching() && !graphDataFetcher.xminFinalReached() )
-		{		
-			var promise = graphDataFetcher.fetchData( xmin )
-				.then(
-					function()
-					{
-						this._graphController.render();
-						return this._fetchDataIfNeeded();
-					}.bind(this))
-				.catch(
-					function( error )
-					{
-						alert( error.toString() );
-					}.bind(this));
+	if ( graphDataFetcher.isFetching() )
+		return Promise.resolve();	
 
-			return promise;
-		}
+	if ( graphDataFetcher._xmin===null || 
+		 (this._graphDataWindow.x<graphDataFetcher._xmin && !graphDataFetcher.xminFinalReached() ) )
+	{		
+		var promise = graphDataFetcher.fetchDataBackward()
+			.then(
+				function()
+				{
+					this._graphController.render();
+					return this._fetchDataIfNeeded();
+				}.bind(this))
+			.catch(
+				function( error )
+				{
+					alert( error.toString() );
+				}.bind(this));
+		return promise;
 	}
 	return Promise.resolve();
 };

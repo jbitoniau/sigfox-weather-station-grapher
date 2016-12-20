@@ -32,120 +32,66 @@ GraphDataFetcher.prototype.xminFinalReached = function()
 	return this._xminFinalReached;
 };
 
-GraphDataFetcher.prototype.fetchData = function( beforeTimeInMilliseconds )
+GraphDataFetcher.prototype.fetchDataForward = function()
 {
 	if ( this.isFetching() )
 		return Promise.reject();
 
-	if ( this._xminFinalReached )
-	{
-		if ( beforeTime<=this._xmin )
-			return Promise.reject();
-	}
-
-	var uri = '/api/devices/' + this._deviceID + '/messages?limit=' + this._limit;
-	if ( beforeTimeInMilliseconds!==null && beforeTimeInMilliseconds!==undefined )
-	{
-		var beforeTimeInSeconds = Math.floor( beforeTimeInMilliseconds / 1000 );
-		uri += '&before=' + beforeTimeInSeconds;
-	}
-
+	return Promise.reject();
+/*
+//beforeTimeInSeconds
+	var uri = GraphDataFetcher.getUri( this._deviceID, this._limit, beforeTimeInSeconds );
 	var promise = HttpRequest.request( uri, 'GET')
 		.then(
 			function( response )
 			{
-				var createUint8ArrayFromMessageString = function( messageString )
-					{
-						// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
-						var messageLengthInBytes = 12;
-						var buffer = new ArrayBuffer(messageLengthInBytes);
-						var uint8Array = new Uint8Array( buffer );
-						for ( var i=0; i<messageLengthInBytes; i++ )
-						{
-							var byteAsHex = messageString.substr( i*2, 2 );
-							var byte = parseInt( byteAsHex, 16 );
-							uint8Array[i] = byte;
-						}
-						return uint8Array;
-					};
-
-				var getWeatherDataFromUint8Array = function( uint8Array )
-					{
-						var dataView = new DataView(uint8Array.buffer);
-						var weatherData = {
-							pressure: dataView.getUint32(0),		
-							temperature: dataView.getFloat32(4),
-							humidity: dataView.getUint32(8)
-						};
-						return weatherData;
-					};
-
 				var messages = JSON.parse(response);
-				if ( messages.data.length>0 )
+				var graphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
+				//if ( messages.data.length>0 )
+			});
+
+	return promise;*/
+};
+
+GraphDataFetcher.prototype.fetchDataBackward = function()
+{
+	if ( this.isFetching() )
+		return Promise.reject( new Error("GraphDataFetcher is already fetching data") );
+
+	if ( this.xminFinalReached() )
+		return Promise.reject( new Error("GraphDataFetcher has reached the end of data") );
+
+	var beforeTimeInSeconds = null;
+	if ( this._xmin )
+		beforeTimeInSeconds = Math.floor( this._xmin / 1000 );
+
+	var uri = GraphDataFetcher._getUri( this._deviceID, this._limit, beforeTimeInSeconds );
+	var promise = HttpRequest.request( uri, 'GET')
+		.then(
+			function( response )
+			{
+				var messages = JSON.parse(response);
+				var graphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
+			
+				if ( graphData.length>0 )
 				{
-					var newGraphData = [];
-				
-					for ( var i=0; i<messages.data.length; ++i  )
+					var xmin = graphData[graphData.length-1].x;
+					var xmax = graphData[0].x;
+
+					if ( this._graphData.length===0 )
 					{
-						var message = messages.data[i];
-						//var numSecondsSinceEpoch = message.time;
-						//var date = new Date( numSecondsSinceEpoch * 1000 );
-						var weatherData = getWeatherDataFromUint8Array( createUint8ArrayFromMessageString( message.data ) );
-
-						var x = message.time * 1000;	// SigFox message timestamp is in seconds. Here we work in milliseconds 
-						if ( weatherData.temperature<-100 || weatherData.temperature>100 )
-						{ 
-							console.warn("Invalid temperature: " + weatherData.temperature + " at time " + new Date(x) );
-							weatherData.temperature = 0;
-						}
-
-						if ( weatherData.humidity<0 || weatherData.humidity>100 )
-						{ 
-							console.warn("Invalid humidity: " + weatherData.humidity + " at time " + new Date(x) );
-							weatherData.humidity = 0;
-						}
-
-						if ( weatherData.pressure<900 || weatherData.pressure>1200 )
-						{ 
-							console.warn("Invalid pressure: " + weatherData.pressure + " at time " + new Date(x) );
-							weatherData.pressure = 0;
-						}
-
-						newGraphData.push( 
-							{
-								x: x,
-								temperature: weatherData.temperature,
-								humidity: weatherData.humidity,
-								pressure: weatherData.pressure,
-								message: message  					// We keep track of the raw message in the graph data
-							});
+						this._graphData.push.apply(this._graphData, graphData); // http://stackoverflow.com/questions/16232915/copying-an-array-of-objects-into-another-array-in-javascript
+						this._xmin = xmin;
+						this._xmax = xmax;
 					}
-
-					// Combine graph data we've just fetched with existing data
-					if ( newGraphData.length>0 )
+					else
 					{
-						var xmin = newGraphData[newGraphData.length-1].x;
-						var xmax = newGraphData[0].x;
-
-						if ( this._graphData.length===0 )
+						for ( var i=0; i<graphData.length; i++ )
 						{
-							// http://stackoverflow.com/questions/16232915/copying-an-array-of-objects-into-another-array-in-javascript
-							this._graphData.push.apply(this._graphData, newGraphData);
-							this._xmin = xmin;
-							this._xmax = xmax;
+							if ( graphData[i].x<this._xmin )
+								this._graphData.push( graphData[i] );
 						}
-						else
-						{
-							// Very naive and incomplete!!!
-							for ( var i=0; i<newGraphData.length; i++ )
-							{
-								if ( newGraphData[i].x<this._xmin )
-								{
-									this._graphData.push( newGraphData[i] );
-								}
-								this._xmin = this._graphData[this._graphData.length-1].x;
-							}
-						}
+						this._xmin = this._graphData[this._graphData.length-1].x;
 					}
 				}
 				else
@@ -154,7 +100,6 @@ GraphDataFetcher.prototype.fetchData = function( beforeTimeInMilliseconds )
 				}
 
 				this._promiseInProgress = null;
-
 				return Promise.resolve();
 			}.bind(this))
 		.catch(
@@ -166,4 +111,81 @@ GraphDataFetcher.prototype.fetchData = function( beforeTimeInMilliseconds )
 
 	this._promiseInProgress = promise;
 	return promise;
+};
+
+GraphDataFetcher._getGraphDataFromSigfoxMessages = function( messages )
+{
+	var graphData = [];
+	for ( var i=0; i<messages.data.length; ++i  )
+	{
+		var message = messages.data[i];
+		var uint8Array = GraphDataFetcher._createUint8ArrayFromMessageString( message.data );
+		var weatherData = GraphDataFetcher._getWeatherDataFromUint8Array( uint8Array );
+		
+		var x = message.time * 1000;	// Sigfox message timestamp is in seconds. Here we work in milliseconds 
+		if ( weatherData.temperature<-100 || weatherData.temperature>100 )
+		{ 
+			console.warn("Invalid temperature: " + weatherData.temperature + " at time " + new Date(x) );
+			weatherData.temperature = 0;
+		}
+
+		if ( weatherData.humidity<0 || weatherData.humidity>100 )
+		{ 
+			console.warn("Invalid humidity: " + weatherData.humidity + " at time " + new Date(x) );
+			weatherData.humidity = 0;
+		}
+
+		if ( weatherData.pressure<900 || weatherData.pressure>1200 )
+		{ 
+			console.warn("Invalid pressure: " + weatherData.pressure + " at time " + new Date(x) );
+			weatherData.pressure = 0;
+		}
+
+		graphData.push( 
+			{
+				x: x,
+				temperature: weatherData.temperature,
+				humidity: weatherData.humidity,
+				pressure: weatherData.pressure,
+				message: message  					// We keep track of the raw message in the graph data
+			});
+	}
+
+	return graphData;
+};
+
+GraphDataFetcher._getUri = function( deviceID, limit, beforeTimeInSeconds )
+{
+	var uri = '/api/devices/' + deviceID + '/messages?limit=' + limit;
+	if ( beforeTimeInSeconds!==null && beforeTimeInSeconds!==undefined )
+	{
+		uri += '&before=' + beforeTimeInSeconds;
+	}
+	return uri;
+};
+
+GraphDataFetcher._createUint8ArrayFromMessageString = function( messageString )
+{
+	// http://stackoverflow.com/questions/1597709/convert-a-string-with-a-hex-representation-of-an-ieee-754-double-into-javascript
+	var messageLengthInBytes = 12;
+	var buffer = new ArrayBuffer(messageLengthInBytes);
+	var uint8Array = new Uint8Array( buffer );
+	for ( var i=0; i<messageLengthInBytes; i++ )
+	{
+		var byteAsHex = messageString.substr( i*2, 2 );
+		var byte = parseInt( byteAsHex, 16 );
+		uint8Array[i] = byte;
+	}
+	return uint8Array;
+};
+
+GraphDataFetcher._getWeatherDataFromUint8Array = function( uint8Array )
+{
+	var dataView = new DataView(uint8Array.buffer);
+	var weatherData = {
+		pressure: dataView.getUint32(0),		
+		temperature: dataView.getFloat32(4),
+		humidity: dataView.getUint32(8)
+	};
+	return weatherData;
 };

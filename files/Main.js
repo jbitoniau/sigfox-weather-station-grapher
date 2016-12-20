@@ -2,10 +2,12 @@
 
 function Main()
 {
+	var deviceID = window.location.pathname.substr( ('/devices/').length );
+
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
 
-	var tempmon = new Tempmon( canvas );
+	var tempmon = new Tempmon( canvas, deviceID );
 
 	var buttons = {
 		'temperature' : document.getElementById('temperatureButton'),

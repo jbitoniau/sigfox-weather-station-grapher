@@ -101,7 +101,7 @@ var server = http.createServer(
 			var filename = path.substr(1);		// Remove the first '/'
 			serveFile( filename, res );
 		}
-		else if ( path==='/')
+		else if ( path.indexOf('/devices/')===0 )
 		{
 			fs.readFile('Tempmon.html', 'utf8', 
 			function (err,data) 
@@ -112,62 +112,6 @@ var server = http.createServer(
 		  		res.end(data);
 			});
 		}
-		else if ( path==='/testurl')
-		{
-			res.writeHead(200, {"Content-Type:": "text/html"});
-
-			var q = url.parse(req.url).query;
-			var params = querystring.parse(q);
-
-			res.write(
-				'<!DOCTYPE html>'+
-				'<html>'+
-				'    <head>'+
-				'        <meta charset="utf-8" />'+
-				'        <title>Ma page Node.js !</title>'+
-				'    </head>'+ 
-				'    <body>'+
-				'     	<p>Voici un paragraphe <strong>HTML</strong> !</p>'+
-				'     	<p>the query string: ' + q + '</p>');
-
-			for ( var key in params )
-			{
-				res.write( 
-				'     	<p>' + key + ' = ' + params[key] + '</p>' 
-				);
-			}
-
-			res.write(
-				'    </body>'+
-				'</html>');
-			res.end();
-		}
-		else if ( path==='/about')
-		{
-			res.writeHead(200, {"Content-Type:": "text/html"});
-			res.write(
-				'<!DOCTYPE html>'+
-				'<html>'+
-				'    <head>'+
-				'        <meta charset="utf-8" />'+
-				'        <title>Ma page Node.js !</title>'+
-				'    </head>'+ 
-				'    <body>'+
-				'     	<p style="background-color:#ff00ff">About!</p>'+
-				'    </body>'+
-				'</html>');
-			res.end();
-		}
-		else if ( path==='/test')
-		{
-			res.writeHead(200, {"Content-Type:": "application/json"});
-			res.write(
-				'{ ' +
-				'	"name" : "john", ' +
-				' 	"age" : 42 ' +
-				'} ' );
-			res.end();
-		}
 		else
 		{
 			createHTMLErrorResponse( res, 404, "Page not found");
@@ -176,10 +120,6 @@ var server = http.createServer(
 
 
 console.log("Starting server...");
-
-/*const file = fs.createWriteStream('test.txt');
-file.write('toto');
-file.end('titi');*/
 
 console.log("Loading credentials...");
 fs.readFile('SigfoxBackendAuth.txt', 'utf8', 
