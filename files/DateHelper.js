@@ -44,7 +44,7 @@ DateHelper.getShortDayOfWeekName = function( utcDayIndex )
 	return shortDaysOfWeekNames[utcDayIndex];
 };
 
-///  http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
+// http://stackoverflow.com/questions/10073699/pad-a-number-with-leading-zeros-in-javascript
 DateHelper.pad = function(n, width, z) 
 {
 	z = z || '0';
@@ -52,7 +52,8 @@ DateHelper.pad = function(n, width, z)
 	return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
 };
 
-DateHelper.getFullTimeText = function(value)		// 13:49:05 20/12/2016
+// 13:49:05 20/12/2016
+DateHelper.getFullTimeText = function(value)		
 {
 	var numMilliseconds = value * 1000;
 	var date = new Date(numMilliseconds);
@@ -65,7 +66,8 @@ DateHelper.getFullTimeText = function(value)		// 13:49:05 20/12/2016
 	return text;
 };
 
-DateHelper.getDayText = function(value, showPeriod)		// Tuesday 20/12/2016 AM 
+// Tuesday 20/12/2016 AM 
+DateHelper.getDayText = function(value, showPeriod)		
 {
 	var numMilliseconds = value * 1000;
 	var date = new Date(numMilliseconds);
@@ -83,12 +85,14 @@ DateHelper.getDayText = function(value, showPeriod)		// Tuesday 20/12/2016 AM
 	return text;
 };
 
-DateHelper.getDayWithPeriodText = function(value)		// Tuesday 20/12/2016 AM 
+// Tuesday 20/12/2016 AM 
+DateHelper.getDayWithPeriodText = function(value)		
 {
 	return DateHelper.getDayText(value, true);
 };
 
-DateHelper.getWeekText = function(value)				// Dec. 2016 Week #52
+// Dec. 2016 Week #52
+DateHelper.getWeekText = function(value)				
 {
 	var numMilliseconds = value * 1000;
 	var date = new Date(numMilliseconds);
@@ -98,7 +102,8 @@ DateHelper.getWeekText = function(value)				// Dec. 2016 Week #52
 	return text;
 };
 
-DateHelper.getMonthText = function(value)				// December 2016
+// December 2016
+DateHelper.getMonthText = function(value)				
 {
 	value += (365.25/12*24*60*60) / 2;			// See getYearText for this gross hack!				 
 	var numMilliseconds = value * 1000;
@@ -108,6 +113,7 @@ DateHelper.getMonthText = function(value)				// December 2016
 	return text;
 };
 
+// 2016
 DateHelper.getYearText = function(value)
 {	
 	// We know this method will be used only for 1st of January time values,

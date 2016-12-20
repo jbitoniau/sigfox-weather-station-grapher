@@ -15,7 +15,7 @@ function GraphDataFetcher(deviceID, limit)
 {
 	this._deviceID = deviceID;
 	this._limit = limit;
-	this._graphData = [];		// should be a public prop
+	this._graphData = [];		// An array of {x:<epoch time in sec>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
 	this._xmin = null;
 	this._xminFinalReached = false;
 	this._xmax = null;
@@ -91,6 +91,7 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 						//var date = new Date( numSecondsSinceEpoch * 1000 );
 						var weatherData = getWeatherDataFromUint8Array( createUint8ArrayFromMessageString( message.data ) );
 
+						var x = message.time;
 						if ( weatherData.temperature<-100 || weatherData.temperature>100 )
 						{ 
 							console.warn("Invalid temperature: " + weatherData.temperature + " at time " + x );
@@ -109,7 +110,6 @@ GraphDataFetcher.prototype.fetchData = function( beforeTime )
 							weatherData.pressure = 0;
 						}
 
-						var x = message.time;
 						newGraphData.push( 
 							{
 								x: x,

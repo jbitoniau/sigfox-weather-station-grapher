@@ -1,51 +1,5 @@
 'use strict';
 
-
-function Segment( x0, x1 )
-{
-	this.x0 = x0<=x1 ? x0 : x1;
-	this.x1 = x0<=x1 ? x1 : x0;
-
-	if ( x1<x0 )
-		console.warn( "segment x0 and x1 ordering is wrong");
-}
-
-Segment.prototype.clone = function()
-{
-	return new Segment( this.x0, this.x1 );
-};
-
-Segment.prototype.subtract = function( otherSegment )
-{
-	if ( otherSegment.x1<this.x0 || otherSegment.x0>this.x1 )
-	{
-		// Other segment is outside of this one, on its left or its right
-		return [this.clone()];
-	}
-
-	var segments = [];
-	if ( otherSegment.x0>this.x0 )
-	{
-		segments.push( new Segment(this.x0, otherSegment.x0) );
-	}
-
-	if ( otherSegment.x1<this.x1 )
-	{
-		segments.push( new Segment(otherSegment.x1, this.x1) );
-	}
-	return segments;
-};
-
-/*Segment.prototype.intersect = function( segment )
-{
-	return [];
-};
-
-Segment.prototype.unite = function( segment )
-{
-	return [];
-};*/
-
 /*
 	GraphDataPresenter
 */
@@ -651,3 +605,51 @@ GraphDataPresenter.graphWindowPointToGraphDataPoint = function( graphWindowPoint
 	var y2 = (graphWindowPoint.y * graphDataWindow.height) + graphDataWindow.y;
 	return {x:x2, y:y2};
 };
+
+/*
+	Segment
+*/
+function Segment( x0, x1 )
+{
+	this.x0 = x0<=x1 ? x0 : x1;
+	this.x1 = x0<=x1 ? x1 : x0;
+
+	if ( x1<x0 )
+		console.warn( "segment x0 and x1 ordering is wrong");
+}
+
+Segment.prototype.clone = function()
+{
+	return new Segment( this.x0, this.x1 );
+};
+
+Segment.prototype.subtract = function( otherSegment )
+{
+	if ( otherSegment.x1<this.x0 || otherSegment.x0>this.x1 )
+	{
+		// Other segment is outside of this one, on its left or its right
+		return [this.clone()];
+	}
+
+	var segments = [];
+	if ( otherSegment.x0>this.x0 )
+	{
+		segments.push( new Segment(this.x0, otherSegment.x0) );
+	}
+
+	if ( otherSegment.x1<this.x1 )
+	{
+		segments.push( new Segment(otherSegment.x1, this.x1) );
+	}
+	return segments;
+};
+
+/*Segment.prototype.intersect = function( segment )
+{
+	return [];
+};
+
+Segment.prototype.unite = function( segment )
+{
+	return [];
+};*/
