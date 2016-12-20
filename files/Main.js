@@ -45,6 +45,28 @@ function Main()
 		getSecondaryLinesSpacingY: GraphDataPresenter.getSecondaryLinesSpacing
 	};
 
+	var calculateBestNumLines = function()
+		{
+			var w = canvas.clientWidth;
+			var h = canvas.clientHeight;
+
+			// Calculate a decent max number of grid lines along the x axis based 
+			// on an average text/label width in pixels (itself calculated from font size)
+			var averageCharWidth = graphOptions.textSize * 0.5;
+			var maxTextWidth = averageCharWidth * 24 + 5;		// Include a few more pixels as a margin
+			var numMaxLabelsX = Math.floor( w / maxTextWidth );
+			if ( numMaxLabelsX<1 )
+				numMaxLabelsX = 1;
+			graphOptions.numMaxLinesX = numMaxLabelsX;
+
+			// Based on the aspect ratio of the canvas and max number of lines on X,
+			// we calculate a max number of linex on the Y axis so it looks balanced
+			graphOptions.numMaxLinesY = Math.floor( h / maxTextWidth );
+			console.log( graphOptions.numMaxLinesX + " " + graphOptions.numMaxLinesY );
+		};
+
+	calculateBestNumLines();
+
 	var graphController = new GraphController( canvas, graphData, graphDataWindow, graphOptions );
 
 	var graphDataType = 'temperature';
@@ -171,6 +193,7 @@ function Main()
 
 	window.addEventListener( "resize", function(event) 
 		{	
+			calculateBestNumLines();
 			graphController.render();
 		});
 }
