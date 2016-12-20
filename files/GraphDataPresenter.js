@@ -108,7 +108,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 		var textSize = graphOptions.textSize || 14;
 		context.font = textSize + "px sans-serif";
 		context.strokeStyle = colors.primaryLines || "#AAAAAA";
-		context.fillStyle = colors.primaryLinesText || "#888888";
+		context.fillStyle = colors.primaryLinesText || "#666666";
 		if ( graphOptions.getPrimaryLinesSpacingX )
 			GraphDataPresenter.drawLinesX( context, canvas, graphDataWindow, graphOptions.getPrimaryLinesSpacingX, graphOptions.getPrimaryLinesTextX, numMaxLinesX );
 		if ( graphOptions.getPrimaryLinesSpacingY )
@@ -426,9 +426,10 @@ GraphDataPresenter.getWeekText = function(value)
 	var numMilliseconds = value * 1000;
 	var date = new Date(numMilliseconds);
 	var week = GraphDataPresenter.getWeekNumber(date);
-	var month = pad( date.getUTCMonth()+1, 2);
+	var monthShortNames = ['Jan','Feb','Mar','Apr','May','June','July','Aug','Sept','Oct','Nov','Dec'];
+	var month = monthShortNames[date.getUTCMonth()];
 	var year = pad( date.getFullYear(), 4);
-	var text = 'Week #' + week + ' ' + month + '/' + year;
+	var text = month + '. ' + year + ' Week #' + week;
 	return text;
 };
 
