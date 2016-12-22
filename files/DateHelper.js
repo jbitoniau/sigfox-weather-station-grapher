@@ -105,7 +105,7 @@ DateHelper.getFullTimeText = function(date, asLocal)	// 13:49:05 20/12/2016
 		DateHelper.pad( DateHelper.getMinutes(date, asLocal), 2 ) + '.' + 
 		DateHelper.pad( DateHelper.getSeconds(date, asLocal), 2 ) + ' ' + 
 		DateHelper.pad( DateHelper.getDate(date, asLocal), 2 ) + '/' + 
-		DateHelper.pad( DateHelper.getMonth(date, asLocal), 2 ) + '/' + 
+		DateHelper.pad( DateHelper.getMonth(date, asLocal)+1, 2 ) + '/' + 
 		DateHelper.getFullYear(date, asLocal);
 	return text;
 };
@@ -115,7 +115,7 @@ DateHelper.getDayText = function(date, showPeriod, asLocal)		// Tuesday 20/12/20
 	var text = 
 		DateHelper.getDayOfWeekName( DateHelper.getDay(date, asLocal) ) + ' ' +
 		DateHelper.pad( DateHelper.getDate(date, asLocal), 2 ) + '/' + 
-		DateHelper.pad( DateHelper.getMonth(date, asLocal), 2 ) + '/' + 
+		DateHelper.pad( DateHelper.getMonth(date, asLocal)+1, 2 ) + '/' + 
 		DateHelper.getFullYear(date, asLocal);
 	
 	if ( showPeriod )
