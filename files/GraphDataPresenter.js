@@ -312,12 +312,14 @@ GraphDataPresenter.drawGraphData = function( context, canvas, graphDataWindow, g
 	}
 };
 
+GraphDataPresenter.dateAsLocal = false;
+
 GraphDataPresenter.timeSubdivisions = [
 	{
 		// 1 minute
 		spacing: 60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getFullTimeText( new Date(value) );
+			return DateHelper.getFullTimeText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -325,7 +327,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 10 minutes
 		spacing: 10*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getFullTimeText( new Date(value) );
+			return DateHelper.getFullTimeText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -333,7 +335,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 1 hour
 		spacing: 60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getFullTimeText( new Date(value) );
+			return DateHelper.getFullTimeText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -341,7 +343,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 6 hours
 		spacing: 6*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getFullTimeText( new Date(value) );
+			return DateHelper.getFullTimeText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -349,7 +351,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// Half a day
 		spacing: 12*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getDayWithPeriodText( new Date(value) );
+			return DateHelper.getDayText( new Date(value), true, GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -357,7 +359,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 1 day
 		spacing: 24*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getDayText( new Date(value) );
+			return DateHelper.getDayText( new Date(value), false, GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -365,7 +367,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 2 days
 		spacing: 2*24*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getDayText( new Date(value) );
+			return DateHelper.getDayText( new Date(value), false, GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -373,7 +375,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 1 week
 		spacing: 7*24*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getWeekText( new Date(value) );
+			return DateHelper.getWeekText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -382,7 +384,7 @@ GraphDataPresenter.timeSubdivisions = [
 		spacing: 365.25/12*24*60*60*1000, 			
 		getText: function(value) { 
 			value += (365.25/12*24*60*60*1000)/2;			// See getYearText for explanation about this type of gross hack!				 
-			return DateHelper.getMonthText( new Date(value) );
+			return DateHelper.getMonthText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -390,7 +392,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// 3 average months
 		spacing: 3*365.25/12*24*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getMonthText( new Date(value) );
+			return DateHelper.getMonthText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -398,7 +400,7 @@ GraphDataPresenter.timeSubdivisions = [
 		// Half an average year
 		spacing: 6*365.25/12*24*60*60*1000, 			
 		getText: function(value) { 
-			return DateHelper.getMonthText( new Date(value) );
+			return DateHelper.getMonthText( new Date(value), GraphDataPresenter.dateAsLocal );
 		}
 	},
 
@@ -412,7 +414,7 @@ GraphDataPresenter.timeSubdivisions = [
 			// the value by half a year, so we're sure we'll be right in the middle of the proper year!
 			value += (365.25*24*60*60*1000)/2;
 			var date = new Date(value);
-			return date.getFullYear();
+			return DateHelper.getFullYear( date, GraphDataPresenter.dateAsLocal );
 		}
 	}
 ];
@@ -611,7 +613,7 @@ GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getL
 			}
 		}
 	}
-}
+};
 
 GraphDataPresenter.drawLinesX = function( context, canvas, graphDataWindow, getLinesSpacing, getLinesText, numMaxLines )
 {
