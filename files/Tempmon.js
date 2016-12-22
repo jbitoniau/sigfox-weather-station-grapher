@@ -3,17 +3,21 @@
 /*
 	Tempmon
 */	
-function Tempmon( canvas, deviceID )
+function Tempmon( canvas, deviceID, initialDate )
 {
+	if ( !initialDate )
+		initialDate = new Date();
+
+	var initialWidth = 100 * GraphDataFetcher._messageIntervalMs;
+	var initialX = initialDate.getTime() - (initialWidth/2);
+
 	// The object that knows how to get data from SigFox backend
-	this._graphDataFetcher = new GraphDataFetcher(deviceID, 100);
+	this._graphDataFetcher = new GraphDataFetcher(deviceID, 100, initialX+initialWidth/2);
 
 	// The type of graph data currently being displayed
 	this._graphDataType = 'temperature';
 
 	// The graph data window used to render the graph
-	var initialWidth = 100*10*60*1000;		// About 100 SigFox messages (messages are 10 minutes appart)
-	var initialX = new Date().getTime() - initialWidth*0.5;
 	this._graphDataWindow = {
 		x: initialX,
 		y: -5,
@@ -50,7 +54,7 @@ function Tempmon( canvas, deviceID )
 		drawOriginAxes: true,
 		drawDataRange: true,
 		drawDataGaps: true,
-		contiguityThreshold: 10.2*60*1000,		// A little bit more than 10 minutes
+		contiguityThreshold: GraphDataFetcher._messageIntervalMs*1.02,		
 		textSize: 12,
 		numMaxLinesX: 5,
 		numMaxLinesY: 5,
@@ -95,7 +99,7 @@ function Tempmon( canvas, deviceID )
 
 	this._onGraphDataTypeChanged = null;
 
-	var f = function(event)
+	/*var f = function(event)
 		{
 			this._forwardFetchTimeout = null;
 
@@ -121,7 +125,7 @@ function Tempmon( canvas, deviceID )
 			this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
 		}.bind(this);
 
-	this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
+	this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );*/
 }
 
 Tempmon.prototype.setGraphDataType = function( graphDataType )
@@ -148,12 +152,56 @@ Tempmon.prototype.setGraphDataType = function( graphDataType )
 Tempmon.prototype._fetchDataIfNeeded = function()
 {
 	var graphDataFetcher = this._graphDataFetcher;
+
 	if ( graphDataFetcher.isFetching() )
 		return Promise.resolve();	
 
-	if ( graphDataFetcher._xmin===null || 
-		 (this._graphDataWindow.x<graphDataFetcher._xmin && !graphDataFetcher.xminFinalReached() ) )
-	{		
+	if ( graphDataFetcher._xmin===null || graphDataFetcher._xmax===null )
+	{
+		// This is the first data fetch, use forward fetch 
+		var promise = graphDataFetcher.fetchDataForward()
+			.then(
+				function()
+				{
+					this._graphController.render();
+					return this._fetchDataIfNeeded();
+				}.bind(this))
+			.catch(
+				function( error )
+				{
+					alert( error.toString() );
+				}.bind(this));
+		return promise;
+	}
+
+	if ( this._graphDataWindow.x+this._graphDataWindow.width>graphDataFetcher._xmax )
+	{
+		var now = new Date().getTime();
+		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - graphDataFetcher._xmax) / (GraphDataFetcher._messageIntervalMs*1.02) );
+		if ( expectedNumberOfMessagesReadyForFetch>0 )
+		{
+			var promise = graphDataFetcher.fetchDataForward()
+				.then(
+					function()
+					{
+						this._graphController.render();
+						return this._fetchDataIfNeeded();
+					}.bind(this))
+				.catch(
+					function( error )
+					{
+						alert( error.toString() );
+					}.bind(this));
+			return promise;
+		}
+		else
+		{
+			// There's most probably no new message to fetch yet
+		}
+	}
+
+	if ( this._graphDataWindow.x<graphDataFetcher._xmin && !graphDataFetcher.xminFinalReached() )
+	{	
 		var promise = graphDataFetcher.fetchDataBackward()
 			.then(
 				function()
@@ -168,6 +216,7 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 				}.bind(this));
 		return promise;
 	}
+
 	return Promise.resolve();
 };
 

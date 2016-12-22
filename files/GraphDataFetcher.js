@@ -11,16 +11,19 @@
 	fetchData is called from most recent time to further and further away back
 	in time.
 */
-function GraphDataFetcher(deviceID, limit)
+function GraphDataFetcher(deviceID, limit, firstFetchBeforeTimeMs)
 {
 	this._deviceID = deviceID;
 	this._limit = limit;
+	this._firstFetchBeforeTimeMs = firstFetchBeforeTimeMs;	// The first fetch request will use this 'beforeTime' if specified
 	this._graphData = [];		// An array of {x:<epoch time in milliseconds>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
 	this._xmin = null;			// In milliseconds
 	this._xmax = null;
 	this._xminFinalReached = false;
 	this._promiseInProgress = null;
 }
+
+GraphDataFetcher._messageIntervalMs = 10*60*1000;	// Theoritical interval in milliseconds between weather messages. In practise, it's slightly more
 
 GraphDataFetcher.prototype.isFetching = function()
 {
@@ -37,12 +40,21 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 	if ( this.isFetching() )
 		return Promise.reject();
 
-	var beforeTimeInSeconds = null;
+	var lastTimeMs = null;
 	if ( this._xmax )
+	{	
+		lastTimeMs = this._xmax;
+	}
+	else if ( this._firstFetchBeforeTimeMs )
+	{	
+		lastTimeMs = this._firstFetchBeforeTimeMs;
+	}
+
+	var beforeTimeInSeconds = null;
+	if ( lastTimeMs )
 	{
-		var averageMessageIntervalInSec = 10 * 60;
-		// The 0.8 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
-		beforeTimeInSeconds = Math.floor( this._xmax / 1000 ) + Math.floor( averageMessageIntervalInSec * this._limit * 0.8 );
+		var beforeTimeMs = lastTimeMs + (GraphDataFetcher._messageIntervalMs*1.02) * (this._limit * 0.9);	// The 0.9 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
+		beforeTimeInSeconds = Math.floor( beforeTimeMs / 1000 );
 	}
 
 	var uri = GraphDataFetcher._getUri( this._deviceID, this._limit, beforeTimeInSeconds );
@@ -63,12 +75,12 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 					}
 					else
 					{
-						for ( var i=0; i<graphData.length; i++ )
+						for ( var i=graphData.length-1; i>=0; i-- )
 						{
 							if ( graphData[i].x>this._xmax )
-								this._graphData.splice( 0, 0, graphData[i] );		// Super inefficient!
+								this._graphData.splice( 0, 0, graphData[i] );	// This is not efficient but will do for such small number of entries!
 						}
-						this._xmax = this._graphData[0].x;
+						this._xmax = beforeTimeInSeconds*1000; ///this._graphData[0].x;
 					}
 				}
 				else
@@ -98,9 +110,21 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 	if ( this.xminFinalReached() )
 		return Promise.reject( new Error("GraphDataFetcher has reached the end of data") );
 
-	var beforeTimeInSeconds = null;
+	var lastTimeMs = null;
 	if ( this._xmin )
-		beforeTimeInSeconds = Math.floor( this._xmin / 1000 );
+	{	
+		lastTimeMs = this._xmin;
+	}
+	else if ( this._firstFetchBeforeTimeMs )
+	{	
+		lastTimeMs = this._firstFetchBeforeTimeMs;
+	}
+
+	var beforeTimeInSeconds = null;
+	if ( lastTimeMs )
+	{
+		beforeTimeInSeconds = Math.floor( lastTimeMs / 1000 );
+	}
 
 	var uri = GraphDataFetcher._getUri( this._deviceID, this._limit, beforeTimeInSeconds );
 	var promise = HttpRequest.request( uri, 'GET')

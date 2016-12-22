@@ -7,7 +7,9 @@ function Main()
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
 
-	var tempmon = new Tempmon( canvas, deviceID );
+	var startDate = new Date( Date.parse("November 6, 2016, 16:14:00") );
+
+	var tempmon = new Tempmon( canvas, deviceID, startDate );
 
 	var buttons = {
 		'temperature' : document.getElementById('temperatureButton'),
