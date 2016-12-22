@@ -80,14 +80,9 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 							if ( graphData[i].x>this._xmax )
 								this._graphData.splice( 0, 0, graphData[i] );	// This is not efficient but will do for such small number of entries!
 						}
-						this._xmax = beforeTimeInSeconds*1000; ///this._graphData[0].x;
+						this._xmax = beforeTimeInSeconds*1000; 	
 					}
 				}
-				else
-				{
-					// What to do?
-				}
-
 				this._promiseInProgress = null;
 				return Promise.resolve();
 			}.bind(this))

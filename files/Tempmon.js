@@ -156,43 +156,23 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 	if ( graphDataFetcher.isFetching() )
 		return Promise.resolve();	
 
+	var promise = null;
+
+	// Is it the first fetch ever?
 	if ( graphDataFetcher._xmin===null || graphDataFetcher._xmax===null )
 	{
 		// This is the first data fetch, use forward fetch 
-		var promise = graphDataFetcher.fetchDataForward()
-			.then(
-				function()
-				{
-					this._graphController.render();
-					return this._fetchDataIfNeeded();
-				}.bind(this))
-			.catch(
-				function( error )
-				{
-					alert( error.toString() );
-				}.bind(this));
-		return promise;
+		promise = graphDataFetcher.fetchDataForward();
 	}
 
-	if ( this._graphDataWindow.x+this._graphDataWindow.width>graphDataFetcher._xmax )
+	// Do we need to fetch data forward based on current graph data window?
+	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>graphDataFetcher._xmax )
 	{
 		var now = new Date().getTime();
 		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - graphDataFetcher._xmax) / (GraphDataFetcher._messageIntervalMs*1.02) );
 		if ( expectedNumberOfMessagesReadyForFetch>0 )
 		{
-			var promise = graphDataFetcher.fetchDataForward()
-				.then(
-					function()
-					{
-						this._graphController.render();
-						return this._fetchDataIfNeeded();
-					}.bind(this))
-				.catch(
-					function( error )
-					{
-						alert( error.toString() );
-					}.bind(this));
-			return promise;
+			promise = graphDataFetcher.fetchDataForward();
 		}
 		else
 		{
@@ -200,9 +180,15 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 		}
 	}
 
-	if ( this._graphDataWindow.x<graphDataFetcher._xmin && !graphDataFetcher.xminFinalReached() )
+	// Do we need to fetch data backward based on current graph data window?
+	if ( !promise && this._graphDataWindow.x<graphDataFetcher._xmin && !graphDataFetcher.xminFinalReached() )
 	{	
-		var promise = graphDataFetcher.fetchDataBackward()
+		promise = graphDataFetcher.fetchDataBackward();
+	}
+
+	if ( promise )
+	{
+		promise = promise 
 			.then(
 				function()
 				{
@@ -214,10 +200,13 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 				{
 					alert( error.toString() );
 				}.bind(this));
-		return promise;
+	}
+	else
+	{
+		promise = Promise.resolve();
 	}
 
-	return Promise.resolve();
+	return promise;
 };
 
 Tempmon.prototype._onGraphDataWindowChange = function()
