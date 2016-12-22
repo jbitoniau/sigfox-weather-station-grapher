@@ -37,20 +37,57 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 	if ( this.isFetching() )
 		return Promise.reject();
 
-	return Promise.reject();
-/*
-//beforeTimeInSeconds
-	var uri = GraphDataFetcher.getUri( this._deviceID, this._limit, beforeTimeInSeconds );
+	var beforeTimeInSeconds = null;
+	if ( this._xmax )
+	{
+		var averageMessageIntervalInSec = 10 * 60;
+		// The 0.8 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
+		beforeTimeInSeconds = Math.floor( this._xmax / 1000 ) + Math.floor( averageMessageIntervalInSec * this._limit * 0.8 );
+	}
+
+	var uri = GraphDataFetcher._getUri( this._deviceID, this._limit, beforeTimeInSeconds );
 	var promise = HttpRequest.request( uri, 'GET')
 		.then(
 			function( response )
 			{
 				var messages = JSON.parse(response);
 				var graphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
-				//if ( messages.data.length>0 )
+			
+				if ( graphData.length>0 )
+				{
+					if ( this._graphData.length===0 )
+					{
+						this._graphData.push.apply(this._graphData, graphData); 
+						this._xmin = graphData[graphData.length-1].x;
+						this._xmax = graphData[0].x;
+					}
+					else
+					{
+						for ( var i=0; i<graphData.length; i++ )
+						{
+							if ( graphData[i].x>this._xmax )
+								this._graphData.splice( 0, 0, graphData[i] );		// Super inefficient!
+						}
+						this._xmax = this._graphData[0].x;
+					}
+				}
+				else
+				{
+					// What to do?
+				}
+
+				this._promiseInProgress = null;
+				return Promise.resolve();
+			}.bind(this))
+		.catch(
+			function( error )
+			{
+				this._promiseInProgress = null;
+				throw error;
 			});
 
-	return promise;*/
+	this._promiseInProgress = promise;
+	return promise;
 };
 
 GraphDataFetcher.prototype.fetchDataBackward = function()
@@ -75,14 +112,11 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 			
 				if ( graphData.length>0 )
 				{
-					var xmin = graphData[graphData.length-1].x;
-					var xmax = graphData[0].x;
-
 					if ( this._graphData.length===0 )
 					{
 						this._graphData.push.apply(this._graphData, graphData); // http://stackoverflow.com/questions/16232915/copying-an-array-of-objects-into-another-array-in-javascript
-						this._xmin = xmin;
-						this._xmax = xmax;
+						this._xmin = graphData[graphData.length-1].x;
+						this._xmax = graphData[0].x;
 					}
 					else
 					{
@@ -122,7 +156,9 @@ GraphDataFetcher._getGraphDataFromSigfoxMessages = function( messages )
 		var uint8Array = GraphDataFetcher._createUint8ArrayFromMessageString( message.data );
 		var weatherData = GraphDataFetcher._getWeatherDataFromUint8Array( uint8Array );
 		
-		var x = message.time * 1000;	// Sigfox message timestamp is in seconds. Here we work in milliseconds 
+		// Sigfox message timestamp is a UTC/GMT time expressed in seconds since Unix Epoch (1st of January 1970)
+		// Graph data x axis is in milliseconds
+		var x = message.time * 1000;	
 		if ( weatherData.temperature<-100 || weatherData.temperature>100 )
 		{ 
 			console.warn("Invalid temperature: " + weatherData.temperature + " at time " + new Date(x) );

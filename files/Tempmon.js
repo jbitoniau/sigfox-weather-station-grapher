@@ -13,7 +13,7 @@ function Tempmon( canvas, deviceID )
 
 	// The graph data window used to render the graph
 	var initialWidth = 100*10*60*1000;		// About 100 SigFox messages (messages are 10 minutes appart)
-	var initialX = new Date().getTime() - initialWidth*0.9;
+	var initialX = new Date().getTime() - initialWidth*0.5;
 	this._graphDataWindow = {
 		x: initialX,
 		y: -5,
@@ -94,6 +94,34 @@ function Tempmon( canvas, deviceID )
 	this._fetchDataIfNeeded();
 
 	this._onGraphDataTypeChanged = null;
+
+	var f = function(event)
+		{
+			this._forwardFetchTimeout = null;
+
+			var graphDataFetcher = this._graphDataFetcher;
+			if ( graphDataFetcher.isFetching() )
+			{
+				this._forwardFetchTimeout = setTimeout( f, 10*1000 );	// Retry shortly
+				return;	
+			}
+
+			var promise = graphDataFetcher.fetchDataForward()
+				.then(
+					function()
+					{
+						this._graphController.render();
+					}.bind(this))
+				.catch(
+					function( error )
+					{
+						alert( error.toString() );
+					}.bind(this));
+			
+			this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
+		}.bind(this);
+
+	this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
 }
 
 Tempmon.prototype.setGraphDataType = function( graphDataType )
