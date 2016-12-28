@@ -91,41 +91,24 @@ function Tempmon( canvas, deviceID, initialDate )
 	// Whenever the window resizes, we need to recalculate a few graph options to adjust to the new size
 	window.addEventListener( "resize", this._onResize.bind(this) );
 
+	this._forwardFetchTimeout = null;
+	this._onGraphDataTypeChanged = null;
+
 	// Initialize for current size
 	this._onResize();
 
 	// Start fetching some data
-	this._fetchDataIfNeeded();
+	this._onGraphDataWindowChange();	
 
-	this._onGraphDataTypeChanged = null;
-
-	/*var f = function(event)
+	this._forwardFetchInterval = setInterval( 
+		function()
 		{
-			this._forwardFetchTimeout = null;
-
-			var graphDataFetcher = this._graphDataFetcher;
-			if ( graphDataFetcher.isFetching() )
+			if ( !this._graphDataFetcher.isFetching() )
 			{
-				this._forwardFetchTimeout = setTimeout( f, 10*1000 );	// Retry shortly
-				return;	
-			}
-
-			var promise = graphDataFetcher.fetchDataForward()
-				.then(
-					function()
-					{
-						this._graphController.render();
-					}.bind(this))
-				.catch(
-					function( error )
-					{
-						alert( error.toString() );
-					}.bind(this));
-			
-			this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
-		}.bind(this);
-
-	this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );*/
+				this._fetchDataIfNeeded()
+			};
+		}.bind(this),
+		10 * 1000 );		
 }
 
 Tempmon.prototype.setGraphDataType = function( graphDataType )
@@ -151,10 +134,11 @@ Tempmon.prototype.setGraphDataType = function( graphDataType )
 
 Tempmon.prototype._fetchDataIfNeeded = function()
 {
+	console.log("_fetchDataIfNeeded");
 	var graphDataFetcher = this._graphDataFetcher;
 
 	if ( graphDataFetcher.isFetching() )
-		return Promise.resolve();	
+		return Promise.reject();	
 
 	var promise = null;
 
@@ -211,7 +195,69 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 
 Tempmon.prototype._onGraphDataWindowChange = function()
 {
-	this._fetchDataIfNeeded();
+	if ( !this._graphDataFetcher.isFetching() )
+	{
+		this._fetchDataIfNeeded()
+	};
+
+	/*
+		var f = function(event)
+		{
+			this._forwardFetchTimeout = null;
+			if ( this._graphDataFetcher.isFetching() )
+			{
+				this._forwardFetchTimeout = setTimeout( f, 5*1000 );	// Retry shortly in few seconds
+				return;	
+			}
+		};
+
+
+
+	if ( !this._graphDataFetcher.isFetching() )
+	{
+		this._fetchDataIfNeeded()
+			.then(
+				function()
+				{
+					if ( this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher._xmax ) 
+					{
+						if ( !this._forwardFetchTimeout )	
+							this._forwardFetchTimeout 
+					}
+					return Promise.resolve();
+				}.bind(this));
+	}
+
+
+	/*var f = function(event)
+		{
+			this._forwardFetchTimeout = null;
+
+			var graphDataFetcher = this._graphDataFetcher;
+			if ( graphDataFetcher.isFetching() )
+			{
+				this._forwardFetchTimeout = setTimeout( f, 10*1000 );	// Retry shortly
+				return;	
+			}
+
+			var promise = graphDataFetcher.fetchDataForward()
+				.then(
+					function()
+					{
+						this._graphController.render();
+					}.bind(this))
+				.catch(
+					function( error )
+					{
+						alert( error.toString() );
+					}.bind(this));
+			
+			this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
+		}.bind(this);
+
+	this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );*/
+
+
 };
 
 Tempmon.prototype._onRendered = function()
@@ -236,7 +282,7 @@ Tempmon.prototype._updateLinesOptions = function()
 	// Calculate a decent max number of grid lines along the x axis based 
 	// on an average text/label width in pixels (itself calculated from font size)
 	var averageCharWidth = textSize * 0.5;
-	var maxTextWidth = averageCharWidth * 24 + 5;		// Include a few more pixels as a margin
+	var maxTextWidth = averageCharWidth * 22 + 4;		// Include a few more pixels as a margin
 	var numMaxLinesX = Math.floor( width / maxTextWidth );
 	if ( numMaxLinesX<1 )
 		numMaxLinesX = 1;

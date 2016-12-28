@@ -37,6 +37,7 @@ GraphDataFetcher.prototype.xminFinalReached = function()
 
 GraphDataFetcher.prototype.fetchDataForward = function()
 {
+	//console.log("fetchDataForward");
 	if ( this.isFetching() )
 		return Promise.reject();
 
@@ -80,7 +81,7 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 							if ( graphData[i].x>this._xmax )
 								this._graphData.splice( 0, 0, graphData[i] );	// This is not efficient but will do for such small number of entries!
 						}
-						this._xmax = beforeTimeInSeconds*1000; 	
+						this._xmax = this._graphData[0].x; 	
 					}
 				}
 				this._promiseInProgress = null;
@@ -99,6 +100,7 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 
 GraphDataFetcher.prototype.fetchDataBackward = function()
 {
+	//console.log("fetchDataBackward");
 	if ( this.isFetching() )
 		return Promise.reject( new Error("GraphDataFetcher is already fetching data") );
 
