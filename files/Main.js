@@ -7,9 +7,12 @@ function Main()
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
 
-	var startDate = null;//new Date( Date.parse("November 14, 2016, 16:14:00") );
-
-	var tempmon = new Tempmon( canvas, deviceID, startDate );
+//var startDate = new Date( Date.parse("November 14, 2016, 16:14:00") );
+	//	var startDate = new Date( Date.parse("December 20, 2016, 16:14:00") );
+	//var startDate = null;
+	var startDate = new Date( Date.parse("November 19, 2016, 16:00:00") );
+	
+	var tempmon = new Tempmon( canvas, deviceID, startDate, true );
 
 	var buttons = {
 		'temperature' : document.getElementById('temperatureButton'),
@@ -54,4 +57,5 @@ function Main()
 			else
 				autoscrollButton.className = "roundedButton";
 		};
+	tempmon._onAutoscrollChanged();
 }

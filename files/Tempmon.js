@@ -3,12 +3,14 @@
 /*
 	Tempmon
 */	
-function Tempmon( canvas, deviceID, initialDate )
+function Tempmon( canvas, deviceID, initialDate, autoscroll )
 {
 	if ( !initialDate )
 		initialDate = new Date();
 
-	var initialWidth = 100 * GraphDataFetcher._messageIntervalMs;
+	this._autoscroll = autoscroll || false;
+
+	var initialWidth = 2000 * GraphDataFetcher._messageIntervalMs;
 	var initialX = initialDate.getTime() - (initialWidth/2);
 
 	// The object that knows how to get data from SigFox backend
@@ -100,9 +102,9 @@ function Tempmon( canvas, deviceID, initialDate )
 	this._onResize();
 
 	// Start fetching some data
-	if ( !this._graphDataFetcher.isFetching() )
+/*	if ( !this._graphDataFetcher.isFetching() )
 	{
-		this._fetchDataIfNeeded();
+		this._fetchDataToFillGraphDataWindow();
 	}
 
 	// Check if new data needs to be fetched on a regular basis
@@ -111,10 +113,17 @@ function Tempmon( canvas, deviceID, initialDate )
 		{
 			if ( !this._graphDataFetcher.isFetching() )
 			{
-				this._fetchDataIfNeeded()
+				this._fetchDataToFillGraphDataWindow()
 			};
 		}.bind(this),
 		10 * 1000 );		
+*/
+	
+	// Start fetching
+	if ( this._autoscroll )
+		this._fetchDataForAutoscroll();
+	else
+		this._fetchDataToFillGraphDataWindow();
 }
 
 Tempmon.prototype.setGraphDataType = function( graphDataType )
@@ -149,6 +158,9 @@ Tempmon.prototype.setAutoscroll = function( autoscroll )
 	{
 		this._scrollToLatestData();
 		this._graphController.render();
+
+		if ( !this._graphDataFetcher.isFetching() )
+			return this._fetchDataForAutoscroll();
 	}
 
 	if ( this._onAutoscrollChanged )
@@ -172,31 +184,74 @@ Tempmon.prototype._scrollToLatestData = function()
 	this._graphDataWindow.x = latestDataPoint.x - this._graphDataWindow.width;
 };
 
-Tempmon.prototype._fetchDataIfNeeded = function()
+Tempmon.prototype._fetchDataForAutoscroll = function()
 {
-	//console.log("_fetchDataIfNeeded");
-	var graphDataFetcher = this._graphDataFetcher;
-
-	if ( graphDataFetcher.isFetching() )
+	//console.log("_fetchDataForAutoscroll");
+	if ( this._graphDataFetcher.isFetching() )
 		return Promise.reject();	
 
-	var promise = null;
+	if ( !this._autoscroll )
+		return Promise.resolve();
 
-	// Is it the first fetch ever?
-	if ( graphDataFetcher._graphData.length===0 )
+	var promise = null;
+	if ( this._graphDataFetcher._graphData.length===0 )
+	{
+		promise = this._graphDataFetcher.fetchDataForward();
+	}
+
+	if ( !promise && this._graphDataFetcher.getDataFinalXMax()===null )
+	{
+		promise = this._graphDataFetcher.fetchDataForward();
+	}
+
+	if ( promise )
+	{
+		promise = promise
+			.then(
+				function()
+				{
+					if ( this._autoscroll )
+						this._scrollToLatestData();
+					this._graphController.render();
+					return this._fetchDataForAutoscroll();
+				}.bind(this))
+			.catch(
+				function( error )
+				{
+					alert( error.toString() );
+				}.bind(this));
+	}
+	else
+	{
+		promise = Promise.resolve();
+	}
+	return promise;
+};
+
+Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
+{
+	//console.log("_fetchDataToFillGraphDataWindow");
+	if ( this._graphDataFetcher.isFetching() )
+		return Promise.reject();	
+
+	if ( this._autoscroll )
+		return Promise.resolve();
+
+	var promise = null;
+	if ( this._graphDataFetcher._graphData.length===0 )
 	{
 		// This is the first data fetch, use forward fetch 
-		promise = graphDataFetcher.fetchDataForward();
+		promise = this._graphDataFetcher.fetchDataForward();
 	}
 
 	// Do we need to fetch data forward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>graphDataFetcher.getDataXMax() )
+	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher.getDataXMax() )
 	{
 		var now = new Date().getTime();
-		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - graphDataFetcher.getDataXMax()) / (GraphDataFetcher._messageIntervalMs*1.02) );
+		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - this._graphDataFetcher.getDataXMax()) / (GraphDataFetcher._messageIntervalMs*1.02) );
 		if ( expectedNumberOfMessagesReadyForFetch>0 )
 		{
-			promise = graphDataFetcher.fetchDataForward();
+			promise = this._graphDataFetcher.fetchDataForward();
 		}
 		else
 		{
@@ -205,9 +260,9 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 	}
 
 	// Do we need to fetch data backward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x<graphDataFetcher.getDataXMin() && !graphDataFetcher.xminFinalReached() )
+	if ( !promise && this._graphDataWindow.x<this._graphDataFetcher.getDataXMin() && this._graphDataFetcher.getDataFinalXMin()===null )
 	{	
-		promise = graphDataFetcher.fetchDataBackward();
+		promise = this._graphDataFetcher.fetchDataBackward();
 	}
 
 	if ( promise )
@@ -219,7 +274,7 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 					if ( this._autoscroll )
 						this._scrollToLatestData();
 					this._graphController.render();
-					return this._fetchDataIfNeeded();
+					return this._fetchDataToFillGraphDataWindow();
 				}.bind(this))
 			.catch(
 				function( error )
@@ -237,14 +292,20 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 
 Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
 {
-	if ( !this._graphDataFetcher.isFetching() )
+	if ( this.getAutoscroll() )
 	{
-		this._fetchDataIfNeeded();
+		if ( this._graphDataWindow.x!==prevGraphDataWindow.x )
+		{
+			this.setAutoscroll( false );
+		}
 	}
 
-	if ( this._graphDataWindow.x!==prevGraphDataWindow.x )
-	{
-		this.setAutoscroll( false );
+	if ( !this.getAutoscroll() )
+	{	
+		if ( !this._graphDataFetcher.isFetching() )
+		{
+			this._fetchDataToFillGraphDataWindow();
+		}
 	}
 };
 

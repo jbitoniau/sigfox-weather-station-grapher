@@ -17,8 +17,8 @@ function GraphDataFetcher(deviceID, limit, firstFetchBeforeTimeMs)
 	this._limit = limit;
 	this._firstFetchBeforeTimeMs = firstFetchBeforeTimeMs;	// The first fetch request will use this 'beforeTime' if specified
 	this._graphData = [];		// An array of {x:<epoch time in milliseconds>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
-	this._xminFinalReached = false;
-	this._xmaxFinalReached = false;
+	this._finalXMin = null;		// The most ancient possible x value on the backend. There's no data available before that point. When it is null, we don't know it yet
+	this._finalXMax = null;		// The most recent x value on the backend. There's no data available (yet!) after that point. When null, we don't know it, but we'll query it quickly on first fetch
 	this._promiseInProgress = null;
 }
 
@@ -43,16 +43,27 @@ GraphDataFetcher.prototype.getDataXMin = function()
 	return this._graphData[this._graphData.length-1].x;
 };
 
-GraphDataFetcher.prototype.xminFinalReached = function()
+GraphDataFetcher.prototype.getDataFinalXMin = function()
 {
-	return this._xminFinalReached;
+	return this._finalXMin;
 };
 
-GraphDataFetcher.prototype.fetchDataForward = function()
+GraphDataFetcher.prototype.getDataFinalXMax = function()
+{
+	return this._finalXMax;
+};
+
+GraphDataFetcher.prototype.fetchDataForward = function( fetchPastMostRecent )
 {
 	//console.log("fetchDataForward");
 	if ( this.isFetching() )
 		return Promise.reject();
+
+	if ( !fetchPastMostRecent )
+	{
+		if ( this.getDataFinalXMax() )
+			return Promise.reject( new Error("GraphDataFetcher has reached most recent data point. No more data to fetch") );
+	}
 
 	var lastTimeMs = null;
 	if ( this.getDataXMax() )
@@ -83,25 +94,27 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 				if ( this._graphData.length>0 )
 				{			
 					var xmax = this.getDataXMax();
+					var newGraphData2 = [];
 					for ( var i=newGraphData.length-1; i>=0; i-- )
 					{
 						if ( newGraphData[i].x>xmax )
-						{
-							newGraphData = newGraphData.slice(0, i+1);				
-							break;
-						}
+							newGraphData2.unshift( newGraphData[i] );
 					}
+					newGraphData = newGraphData2;
 				}
 
 				if ( newGraphData.length>0 )
 				{
 					// Insert new graph data in front of the data we've got 
 					for ( var i=newGraphData.length-1; i>=0; i-- )
-						this._graphData.splice( 0, 0, newGraphData[i] );	
+						this._graphData.unshift( newGraphData[i] );	
 				}
 				else
 				{
-					this._xmaxFinalReached = true;	
+					if ( this._graphData.length>0 )
+						this._finalXMax = this._graphData[0].x;
+					else
+						console.warn("No data on server?");
 				}
 
 				this._promiseInProgress = null;
@@ -125,8 +138,8 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 	if ( this.isFetching() )
 		return Promise.reject( new Error("GraphDataFetcher is already fetching data") );
 
-	if ( this.xminFinalReached() )
-		return Promise.reject( new Error("GraphDataFetcher has reached the end of data") );
+	if ( this.getDataFinalXMin() )
+		return Promise.reject( new Error("GraphDataFetcher has reached most ancient data point. No more data to fetch") );
 
 	var lastTimeMs = null;
 	if ( this.getDataXMin() )
@@ -156,14 +169,13 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 				if ( this._graphData.length>0 )
 				{			
 					var xmin = this.getDataXMin();
+					var newGraphData2 = [];
 					for ( var i=0; i<newGraphData.length; ++i )
 					{
 						if ( newGraphData[i].x<xmin )
-						{
-							newGraphData = newGraphData.slice(i);				
-							break;
-						}
+							newGraphData2.push( newGraphData[i] );
 					}
+					newGraphData = newGraphData2;
 				}
 
 				if ( newGraphData.length>0 )
@@ -174,9 +186,10 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 				}
 				else
 				{
-					// If there was no new graph data, we've reached the end of the available past data.
-					// This flag is important as without it, we'd continuously try to fetch more past data.
-					this._xminFinalReached = true;	
+					if ( this._graphData.length>0 )
+						this._finalXMin = this._graphData[this._graphData.length-1].x;	
+					else
+						console.warn("No data on server?");
 				}
 
 				this._promiseInProgress = null;
