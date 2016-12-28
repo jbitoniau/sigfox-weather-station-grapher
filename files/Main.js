@@ -38,4 +38,20 @@ function Main()
 			var button = buttons[graphDataType];
 			button.className = "roundedButtonToggled";
 		};
+
+
+	var autoscrollButton = document.getElementById('autoscrollButton');
+	autoscrollButton.onclick = function( event ) 
+		{	
+			var autoscroll = !tempmon._graphController.getAutoscroll();
+			tempmon._graphController.setAutoscroll(autoscroll)
+		};
+	tempmon._graphController._onAutoscrollChanged = function()
+		{
+			var autoscroll = tempmon._graphController.getAutoscroll();
+			if ( autoscroll )
+				autoscrollButton.className = "roundedButtonToggled";
+			else
+				autoscrollButton.className = "roundedButton";
+		};
 }

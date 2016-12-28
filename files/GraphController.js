@@ -10,6 +10,8 @@ function GraphController( canvas, graphData, graphDataWindow, graphOptions )
 	this._graphDataWindow = graphDataWindow;
 	this._graphOptions = graphOptions;
 
+	this._autoscroll = false;
+
 	this._onKeyDownHandler = this._onKeyDown.bind(this);
 	this._onMouseDownHandler = this._onMouseDown.bind(this);
 	this._onMouseMoveHandler = this._onMouseMove.bind(this);
@@ -33,6 +35,7 @@ function GraphController( canvas, graphData, graphDataWindow, graphOptions )
 
 	this._onGraphDataWindowChange = null;
 	this._onRendered = null;
+	this._onAutoscrollChanged = null;
 }
 
 GraphController.prototype.dispose = function()
@@ -53,6 +56,20 @@ GraphController.prototype.render = function()
 	
 	if ( this._onRendered )
 		this._onRendered();
+};
+
+GraphController.prototype.setAutoscroll = function( autoscroll )
+{
+	if ( this._autoscroll===autoscroll )
+		return;
+	this._autoscroll = autoscroll;
+	if ( this._onAutoscrollChanged )
+		this._onAutoscrollChanged();
+};
+
+GraphController.prototype.getAutoscroll = function()
+{
+	return this._autoscroll;
 };
 
 // Update the graph data window to zoom by the given factors on x and y axes while preserving the graph data point

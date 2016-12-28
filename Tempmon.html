@@ -12,14 +12,21 @@
 			border:1px solid grey; 
 			border-radius:9999px;
 			user-select:none;
+			font-family:Arial, Helvetica, sans-serif;
+			font-size:11px;
 		}
 
+		/* http://stackoverflow.com/questions/5670879/css-html-create-a-glowing-border-around-an-input-field */
 		.roundedButton:focus
 		{
-			/*border:1px solid #DDDDDD; 		 http://stackoverflow.com/questions/5670879/css-html-create-a-glowing-border-around-an-input-field */
+			outline:0;
+			box-shadow: 0 0 4px grey;
+		}
+
+		.roundedButton:hover
+		{
 			background-color:#EEEEEE;
 			outline:0;
-			/*box-shadow: 0 0 10px #9ecaed;*/
 		}
 
 		.roundedButtonToggled
@@ -27,30 +34,38 @@
 			background-color:#CCCCCC;
 			border:1px solid grey; 
 			border-radius:9999px;
+			font-family:Arial, Helvetica, sans-serif;
+			font-size:11px;
 		}
 
 		.roundedButtonToggled:focus
 		{
-			/*border:1px solid #DDDDDD; 		/* http://stackoverflow.com/questions/5670879/css-html-create-a-glowing-border-around-an-input-field */
 			outline:0;
-			/*box-shadow: 0 0 10px #9ecaed;*/
+			box-shadow: 0 0 4px grey;
 		}
+
 	</style>
 	
 	<body>
 		<div style="position:absolute; top:5px; left:5px; bottom:5px; right:5px;">
 				<canvas id="graphCanvas" style="outline:0; position:absolute; width:100%; height:100%; min-width:50px; min-height:50px; border:1px solid #555555;" width=50px height=50px tabindex="0"></canvas> <!-- canvas needs to both the opening and ending tags -->
-				
-				<div style="position:absolute; top:5px; left:5px; height:25px; display:flex; flex-direction:row; justify-content:space-around; align-items:stretch;">
-					<button class="roundedButton" id="temperatureButton" style="margin-right:5px">Temperature</button>
-					<button class="roundedButton" id="humidityButton" style="margin-right:5px">Humidity</button>
-					<button class="roundedButton" id="pressureButton" style="margin-right:5px">Pressure</button>
+				<div style="position:absolute; top:0px; left:0px; height:35px; display:flex; flex-direction:row; justify-content:space-around; align-items:stretch;">
+					<button class="roundedButton" id="temperatureButton" style="margin:5 0 5 5">Temperature</button>
+					<button class="roundedButton" id="humidityButton" style="margin:5 0 5 5">Humidity</button>
+					<button class="roundedButton" id="pressureButton" style="margin:5 0 5 5">Pressure</button>
+					<button class="roundedButton" id="autoscrollButton" style="margin:5 0 5 5">
+						<svg width="20px" height="20px" xmlns="http://www.w3.org/2000/svg" viewBox="-10 -10 220 220">
+							<g>
+								<ellipse stroke="#000" ry="70" rx="70" cy="100" cx="100" stroke-width="10" fill="transparent"/>
+								<ellipse stroke="null" ry="40" rx="40" cy="100" cx="100" stroke-width="0" fill="#000"/>
+								<line stroke-linecap="undefined" stroke-linejoin="undefined" y2="100" x2="35" y1="100" x1="10" stroke-width="20" stroke="#000" />
+								<line stroke-linecap="undefined" stroke-linejoin="undefined" y2="100" x2="190" y1="100" x1="165" stroke-width="20" stroke="#000" />
+								<line stroke-linecap="undefined" stroke-linejoin="undefined" y2="35" x2="100" y1="10" x1="100" stroke-width="20" stroke="#000" />
+								<line stroke-linecap="undefined" stroke-linejoin="undefined" y2="190" x2="100" y1="165" x1="100" stroke-width="20" stroke="#000" />
+							</g>
+						</svg>
+					</button>
 				</div>
-
-		<!--		<div style="position:absolute; bottom:5px; left:5px; width:70px; height:30px; display:flex; flex-direction:row; justify-content:space-around; align-items:stretch;">
-					<button id="graphZoomInButton" style="flex:0 0 30px; font-size:15px">+</button>
-					<button id="graphZoomOutButton" style="flex:0 0 30px; font-size:15px">-</button>
-				</div>-->
 			</div>
 		</div>
 	</body>
