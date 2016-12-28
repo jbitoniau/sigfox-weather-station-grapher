@@ -18,7 +18,7 @@ GraphDataPresenter.render = function( canvas, graphData, graphDataWindow, graphO
 	var canvasHeight = canvas.height;
 	var context = canvas.getContext("2d");
 
-	var graphOptions = graphOptions || {};
+	graphOptions = graphOptions || {};
 	var colors = graphOptions.colors || {};
 
 	if ( graphOptions.clearCanvas )
