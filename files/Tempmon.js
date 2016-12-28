@@ -183,17 +183,17 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 	var promise = null;
 
 	// Is it the first fetch ever?
-	if ( graphDataFetcher._xmin===null || graphDataFetcher._xmax===null )
+	if ( graphDataFetcher._graphData.length===0 )
 	{
 		// This is the first data fetch, use forward fetch 
 		promise = graphDataFetcher.fetchDataForward();
 	}
 
 	// Do we need to fetch data forward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>graphDataFetcher._xmax )
+	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>graphDataFetcher.getDataXMax() )
 	{
 		var now = new Date().getTime();
-		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - graphDataFetcher._xmax) / (GraphDataFetcher._messageIntervalMs*1.02) );
+		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - graphDataFetcher.getDataXMax()) / (GraphDataFetcher._messageIntervalMs*1.02) );
 		if ( expectedNumberOfMessagesReadyForFetch>0 )
 		{
 			promise = graphDataFetcher.fetchDataForward();
@@ -205,7 +205,7 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 	}
 
 	// Do we need to fetch data backward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x<graphDataFetcher._xmin && !graphDataFetcher.xminFinalReached() )
+	if ( !promise && this._graphDataWindow.x<graphDataFetcher.getDataXMin() && !graphDataFetcher.xminFinalReached() )
 	{	
 		promise = graphDataFetcher.fetchDataBackward();
 	}

@@ -17,9 +17,8 @@ function GraphDataFetcher(deviceID, limit, firstFetchBeforeTimeMs)
 	this._limit = limit;
 	this._firstFetchBeforeTimeMs = firstFetchBeforeTimeMs;	// The first fetch request will use this 'beforeTime' if specified
 	this._graphData = [];		// An array of {x:<epoch time in milliseconds>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
-	this._xmin = null;			// In milliseconds
-	this._xmax = null;
 	this._xminFinalReached = false;
+	this._xmaxFinalReached = false;
 	this._promiseInProgress = null;
 }
 
@@ -28,6 +27,20 @@ GraphDataFetcher._messageIntervalMs = 10*60*1000;	// Theoritical interval in mil
 GraphDataFetcher.prototype.isFetching = function()
 {
 	return !!this._promiseInProgress;
+};
+
+GraphDataFetcher.prototype.getDataXMax = function()
+{
+	if ( this._graphData.length===0 )
+		return null;
+	return this._graphData[0].x;
+};
+
+GraphDataFetcher.prototype.getDataXMin = function()
+{
+	if ( this._graphData.length===0 )
+		return null;
+	return this._graphData[this._graphData.length-1].x;
 };
 
 GraphDataFetcher.prototype.xminFinalReached = function()
@@ -42,9 +55,9 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 		return Promise.reject();
 
 	var lastTimeMs = null;
-	if ( this._xmax )
+	if ( this.getDataXMax() )
 	{	
-		lastTimeMs = this._xmax;
+		lastTimeMs = this.getDataXMax();
 	}
 	else if ( this._firstFetchBeforeTimeMs )
 	{	
@@ -64,28 +77,36 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 			function( response )
 			{
 				var messages = JSON.parse(response);
-				var graphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
+				var newGraphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
 			
-				if ( graphData.length>0 )
-				{
-					if ( this._graphData.length===0 )
+				// Remove from new graph data the data we've already got 
+				if ( this._graphData.length>0 )
+				{			
+					var xmax = this.getDataXMax();
+					for ( var i=newGraphData.length-1; i>=0; i-- )
 					{
-						this._graphData.push.apply(this._graphData, graphData); 
-						this._xmin = graphData[graphData.length-1].x;
-						this._xmax = graphData[0].x;
-					}
-					else
-					{
-						for ( var i=graphData.length-1; i>=0; i-- )
+						if ( newGraphData[i].x>xmax )
 						{
-							if ( graphData[i].x>this._xmax )
-								this._graphData.splice( 0, 0, graphData[i] );	// This is not efficient but will do for such small number of entries!
+							newGraphData = newGraphData.slice(0, i+1);				
+							break;
 						}
-						this._xmax = this._graphData[0].x; 	
 					}
 				}
+
+				if ( newGraphData.length>0 )
+				{
+					// Insert new graph data in front of the data we've got 
+					for ( var i=newGraphData.length-1; i>=0; i-- )
+						this._graphData.splice( 0, 0, newGraphData[i] );	
+				}
+				else
+				{
+					this._xmaxFinalReached = true;	
+				}
+
 				this._promiseInProgress = null;
-				return Promise.resolve();
+
+				return Promise.resolve(newGraphData);
 			}.bind(this))
 		.catch(
 			function( error )
@@ -108,9 +129,9 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 		return Promise.reject( new Error("GraphDataFetcher has reached the end of data") );
 
 	var lastTimeMs = null;
-	if ( this._xmin )
+	if ( this.getDataXMin() )
 	{	
-		lastTimeMs = this._xmin;
+		lastTimeMs = this.getDataXMin();
 	}
 	else if ( this._firstFetchBeforeTimeMs )
 	{	
@@ -129,33 +150,38 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 			function( response )
 			{
 				var messages = JSON.parse(response);
-				var graphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
-			
-				if ( graphData.length>0 )
-				{
-					if ( this._graphData.length===0 )
+				var newGraphData = GraphDataFetcher._getGraphDataFromSigfoxMessages( messages );
+
+				// Remove from new graph data the data we've already got 
+				if ( this._graphData.length>0 )
+				{			
+					var xmin = this.getDataXMin();
+					for ( var i=0; i<newGraphData.length; ++i )
 					{
-						this._graphData.push.apply(this._graphData, graphData); // http://stackoverflow.com/questions/16232915/copying-an-array-of-objects-into-another-array-in-javascript
-						this._xmin = graphData[graphData.length-1].x;
-						this._xmax = graphData[0].x;
-					}
-					else
-					{
-						for ( var i=0; i<graphData.length; i++ )
+						if ( newGraphData[i].x<xmin )
 						{
-							if ( graphData[i].x<this._xmin )
-								this._graphData.push( graphData[i] );
+							newGraphData = newGraphData.slice(i);				
+							break;
 						}
-						this._xmin = this._graphData[this._graphData.length-1].x;
 					}
+				}
+
+				if ( newGraphData.length>0 )
+				{
+					// Push new graph data at the end of the data we've got 
+					for ( var i=0; i<newGraphData.length; ++i )
+						this._graphData.push( newGraphData[i] );	
 				}
 				else
 				{
-					this._xminFinalReached = true;
+					// If there was no new graph data, we've reached the end of the available past data.
+					// This flag is important as without it, we'd continuously try to fetch more past data.
+					this._xminFinalReached = true;	
 				}
 
 				this._promiseInProgress = null;
-				return Promise.resolve();
+
+				return Promise.resolve(newGraphData);
 			}.bind(this))
 		.catch(
 			function( error )
