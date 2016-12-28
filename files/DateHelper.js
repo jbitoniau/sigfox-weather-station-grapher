@@ -121,9 +121,9 @@ DateHelper.getDayText = function(date, showPeriod, asLocal)		// Tuesday 20/12/20
 	if ( showPeriod )
 	{
 		if ( date.getUTCHours()<12 )		// https://en.wikipedia.org/wiki/12-hour_clock
-			text += 'AM';
+			text += ' AM';
 		else
-			text += 'PM';
+			text += ' PM';
 	}
 	return text;
 };
