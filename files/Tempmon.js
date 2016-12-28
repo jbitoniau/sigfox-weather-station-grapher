@@ -160,7 +160,7 @@ Tempmon.prototype.setAutoscroll = function( autoscroll )
 		this._graphController.render();
 
 		if ( !this._graphDataFetcher.isFetching() )
-			return this._fetchDataForAutoscroll();
+			this._fetchDataForAutoscroll();
 	}
 
 	if ( this._onAutoscrollChanged )
@@ -191,15 +191,16 @@ Tempmon.prototype._fetchDataForAutoscroll = function()
 		return Promise.reject();	
 
 	if ( !this._autoscroll )
-		return Promise.resolve();
+		return this._fetchDataToFillGraphDataWindow();
 
 	var promise = null;
-	if ( this._graphDataFetcher._graphData.length===0 )
+	if ( this._graphDataFetcher._graphData.length===0 && this._graphDataFetcher.canFetchDataForward() )
 	{
+		// Warning! Probably something to do when no data at all found on server
 		promise = this._graphDataFetcher.fetchDataForward();
 	}
 
-	if ( !promise && this._graphDataFetcher.getDataFinalXMax()===null )
+	if ( !promise && this._graphDataFetcher.canFetchDataForward() ) 
 	{
 		promise = this._graphDataFetcher.fetchDataForward();
 	}
@@ -235,32 +236,23 @@ Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
 		return Promise.reject();	
 
 	if ( this._autoscroll )
-		return Promise.resolve();
+		return this._fetchDataForAutoscroll();
 
 	var promise = null;
-	if ( this._graphDataFetcher._graphData.length===0 )
+	if ( this._graphDataFetcher._graphData.length===0 && this._graphDataFetcher.canFetchDataForward() )
 	{
 		// This is the first data fetch, use forward fetch 
 		promise = this._graphDataFetcher.fetchDataForward();
 	}
 
 	// Do we need to fetch data forward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher.getDataXMax() )
+	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher.getDataXMax() && this._graphDataFetcher.canFetchDataForward() )
 	{
-		var now = new Date().getTime();
-		var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - this._graphDataFetcher.getDataXMax()) / (GraphDataFetcher._messageIntervalMs*1.02) );
-		if ( expectedNumberOfMessagesReadyForFetch>0 )
-		{
-			promise = this._graphDataFetcher.fetchDataForward();
-		}
-		else
-		{
-			// There's most probably no new message to fetch yet
-		}
+		promise = this._graphDataFetcher.fetchDataForward();
 	}
 
 	// Do we need to fetch data backward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x<this._graphDataFetcher.getDataXMin() && this._graphDataFetcher.getDataFinalXMin()===null )
+	if ( !promise && this._graphDataWindow.x<this._graphDataFetcher.getDataXMin() && this._graphDataFetcher.canFetchDataBackward() )
 	{	
 		promise = this._graphDataFetcher.fetchDataBackward();
 	}

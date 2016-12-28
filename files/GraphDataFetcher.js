@@ -53,6 +53,19 @@ GraphDataFetcher.prototype.getDataFinalXMax = function()
 	return this._finalXMax;
 };
 
+GraphDataFetcher.prototype.canFetchDataForward = function()
+{
+	if ( !this.getDataFinalXMax() )
+		return true;
+
+	var now = new Date().getTime();
+	var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - this.getDataXMax()) / (GraphDataFetcher._messageIntervalMs*1.02) );
+	if ( expectedNumberOfMessagesReadyForFetch<=0 )
+		return false;
+	
+	return true;
+};
+
 GraphDataFetcher.prototype.fetchDataForward = function( fetchPastMostRecent )
 {
 	//console.log("fetchDataForward");
@@ -132,13 +145,19 @@ GraphDataFetcher.prototype.fetchDataForward = function( fetchPastMostRecent )
 	return promise;
 };
 
+GraphDataFetcher.prototype.canFetchDataBackward = function()
+{
+	// Once we've identified the final x min, we know there's nothing more to fetch ever
+	return this.getDataFinalXMin();
+};
+
 GraphDataFetcher.prototype.fetchDataBackward = function()
 {
 	//console.log("fetchDataBackward");
 	if ( this.isFetching() )
 		return Promise.reject( new Error("GraphDataFetcher is already fetching data") );
 
-	if ( this.getDataFinalXMin() )
+	if ( !this.canFetchDataBackward() )
 		return Promise.reject( new Error("GraphDataFetcher has reached most ancient data point. No more data to fetch") );
 
 	var lastTimeMs = null;
