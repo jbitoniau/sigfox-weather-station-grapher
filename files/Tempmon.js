@@ -91,8 +91,10 @@ function Tempmon( canvas, deviceID, initialDate )
 	// Whenever the window resizes, we need to recalculate a few graph options to adjust to the new size
 	window.addEventListener( "resize", this._onResize.bind(this) );
 
-	this._forwardFetchTimeout = null;
 	this._onGraphDataTypeChanged = null;
+	this._onAutoscrollChanged = null;
+
+	this._forwardFetchTimeout = null;
 
 	// Initialize for current size
 	this._onResize();
@@ -132,9 +134,36 @@ Tempmon.prototype.setGraphDataType = function( graphDataType )
 		this._onGraphDataTypeChanged( prevGraphDataType, this._graphDataType );
 };
 
+Tempmon.prototype.setAutoscroll = function( autoscroll )
+{
+	if ( this._autoscroll===autoscroll )
+		return;
+
+	this._autoscroll = autoscroll;
+
+	if ( this._autoscroll )
+	{
+		var graphData = this._graphDataFetcher._graphData;
+		if ( graphData.length>0 )
+		{
+			var lastDataPoint = graphData[0];
+			this._graphDataWindow.x = lastDataPoint.x - this._graphDataWindow.width;
+			this._graphController.render();		
+		}
+	}
+
+	if ( this._onAutoscrollChanged )
+		this._onAutoscrollChanged();
+};
+
+Tempmon.prototype.getAutoscroll = function()
+{
+	return this._autoscroll;
+};
+
 Tempmon.prototype._fetchDataIfNeeded = function()
 {
-	console.log("_fetchDataIfNeeded");
+	//console.log("_fetchDataIfNeeded");
 	var graphDataFetcher = this._graphDataFetcher;
 
 	if ( graphDataFetcher.isFetching() )
@@ -197,67 +226,10 @@ Tempmon.prototype._onGraphDataWindowChange = function()
 {
 	if ( !this._graphDataFetcher.isFetching() )
 	{
-		this._fetchDataIfNeeded()
+		this._fetchDataIfNeeded();
 	};
 
-	/*
-		var f = function(event)
-		{
-			this._forwardFetchTimeout = null;
-			if ( this._graphDataFetcher.isFetching() )
-			{
-				this._forwardFetchTimeout = setTimeout( f, 5*1000 );	// Retry shortly in few seconds
-				return;	
-			}
-		};
-
-
-
-	if ( !this._graphDataFetcher.isFetching() )
-	{
-		this._fetchDataIfNeeded()
-			.then(
-				function()
-				{
-					if ( this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher._xmax ) 
-					{
-						if ( !this._forwardFetchTimeout )	
-							this._forwardFetchTimeout 
-					}
-					return Promise.resolve();
-				}.bind(this));
-	}
-
-
-	/*var f = function(event)
-		{
-			this._forwardFetchTimeout = null;
-
-			var graphDataFetcher = this._graphDataFetcher;
-			if ( graphDataFetcher.isFetching() )
-			{
-				this._forwardFetchTimeout = setTimeout( f, 10*1000 );	// Retry shortly
-				return;	
-			}
-
-			var promise = graphDataFetcher.fetchDataForward()
-				.then(
-					function()
-					{
-						this._graphController.render();
-					}.bind(this))
-				.catch(
-					function( error )
-					{
-						alert( error.toString() );
-					}.bind(this));
-			
-			this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );
-		}.bind(this);
-
-	this._forwardFetchTimeout = setTimeout( f, 2*60*1000 );*/
-
-
+	this.setAutoscroll( false );
 };
 
 Tempmon.prototype._onRendered = function()

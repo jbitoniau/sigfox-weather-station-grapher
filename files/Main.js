@@ -43,12 +43,12 @@ function Main()
 	var autoscrollButton = document.getElementById('autoscrollButton');
 	autoscrollButton.onclick = function( event ) 
 		{	
-			var autoscroll = !tempmon._graphController.getAutoscroll();
-			tempmon._graphController.setAutoscroll(autoscroll)
+			var autoscroll = !tempmon.getAutoscroll();
+			tempmon.setAutoscroll(autoscroll);
 		};
-	tempmon._graphController._onAutoscrollChanged = function()
+	tempmon._onAutoscrollChanged = function()
 		{
-			var autoscroll = tempmon._graphController.getAutoscroll();
+			var autoscroll = tempmon.getAutoscroll();
 			if ( autoscroll )
 				autoscrollButton.className = "roundedButtonToggled";
 			else
