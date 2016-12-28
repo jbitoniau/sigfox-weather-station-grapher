@@ -143,13 +143,8 @@ Tempmon.prototype.setAutoscroll = function( autoscroll )
 
 	if ( this._autoscroll )
 	{
-		var graphData = this._graphDataFetcher._graphData;
-		if ( graphData.length>0 )
-		{
-			var lastDataPoint = graphData[0];
-			this._graphDataWindow.x = lastDataPoint.x - this._graphDataWindow.width;
-			this._graphController.render();		
-		}
+		this._scrollToLatestData();
+		this._graphController.render();
 	}
 
 	if ( this._onAutoscrollChanged )
@@ -159,6 +154,18 @@ Tempmon.prototype.setAutoscroll = function( autoscroll )
 Tempmon.prototype.getAutoscroll = function()
 {
 	return this._autoscroll;
+};
+
+// Change the x position of the graph data window to show the latest data points.
+// This method doesn't affect the other graph data window properties.
+Tempmon.prototype._scrollToLatestData = function()
+{
+	var graphData = this._graphDataFetcher._graphData;
+	if ( graphData.length===0 )
+		return;
+
+	var latestDataPoint = graphData[0];
+	this._graphDataWindow.x = latestDataPoint.x - this._graphDataWindow.width;
 };
 
 Tempmon.prototype._fetchDataIfNeeded = function()
@@ -205,6 +212,8 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 			.then(
 				function()
 				{
+					if ( this._autoscroll )
+						this._scrollToLatestData();
 					this._graphController.render();
 					return this._fetchDataIfNeeded();
 				}.bind(this))
