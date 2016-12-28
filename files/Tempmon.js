@@ -100,8 +100,12 @@ function Tempmon( canvas, deviceID, initialDate )
 	this._onResize();
 
 	// Start fetching some data
-	this._onGraphDataWindowChange();	
+	if ( !this._graphDataFetcher.isFetching() )
+	{
+		this._fetchDataIfNeeded();
+	}
 
+	// Check if new data needs to be fetched on a regular basis
 	this._forwardFetchInterval = setInterval( 
 		function()
 		{
@@ -231,14 +235,17 @@ Tempmon.prototype._fetchDataIfNeeded = function()
 	return promise;
 };
 
-Tempmon.prototype._onGraphDataWindowChange = function()
+Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
 {
 	if ( !this._graphDataFetcher.isFetching() )
 	{
 		this._fetchDataIfNeeded();
-	};
+	}
 
-	this.setAutoscroll( false );
+	if ( this._graphDataWindow.x!==prevGraphDataWindow.x )
+	{
+		this.setAutoscroll( false );
+	}
 };
 
 Tempmon.prototype._onRendered = function()

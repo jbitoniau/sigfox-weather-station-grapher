@@ -33,7 +33,7 @@ function GraphController( canvas, graphData, graphDataWindow, graphOptions )
 	this._mousePosition = null;	
 	this._touches = [];		// An array of {x, y, id} objects. The order of the touches is chronological as they appear in touch start event
 
-	this._onGraphDataWindowChange = null;
+	this._onGraphDataWindowChange = null;	// This gets called whenever user interaction triggers a change to the graph data window
 	this._onRendered = null;
 }
 
@@ -106,6 +106,8 @@ GraphController.prototype.panAndZoom = function( firstCanvasPointFrom, firstCanv
 
 GraphController.prototype._onKeyDown = function( event )
 {
+	var prevGraphDataWindow = GraphController._cloneGraphDataWindow( this._graphDataWindow );
+	
 	var canvasPointFrom = GraphDataPresenter.graphWindowPointToCanvasPoint( {x:0.5, y:0.5}, this._canvas );
 
 	var windowUpdated = false;
@@ -154,7 +156,7 @@ GraphController.prototype._onKeyDown = function( event )
 	if ( windowUpdated )
 	{
 		if ( this._onGraphDataWindowChange )
-			this._onGraphDataWindowChange();
+			this._onGraphDataWindowChange( prevGraphDataWindow );
 		this.render();
 	}
 };
@@ -169,13 +171,15 @@ GraphController.prototype._onMouseMove = function( event )
 	if ( !this._mousePosition )
 		return;
 
+	var prevGraphDataWindow = GraphController._cloneGraphDataWindow( this._graphDataWindow );
+	
 	var prevMousePosition = this._mousePosition;
 	this._mousePosition = GraphController._getCanvasPointFromMouseEvent( event );
 
 	this.pan( prevMousePosition, this._mousePosition );
 
 	if ( this._onGraphDataWindowChange )
-		this._onGraphDataWindowChange();
+		this._onGraphDataWindowChange( prevGraphDataWindow );
 	this.render();
 };
 
@@ -186,6 +190,8 @@ GraphController.prototype._onMouseUp = function( event )
 
 GraphController.prototype._onWheel = function( event )
 {
+	var prevGraphDataWindow = GraphController._cloneGraphDataWindow( this._graphDataWindow );
+	
 	var canvasPointFrom = GraphController._getCanvasPointFromMouseEvent( event );
 	if ( event.ctrlKey )
 	{
@@ -222,7 +228,7 @@ GraphController.prototype._onWheel = function( event )
 	}
 
 	if ( this._onGraphDataWindowChange )
-		this._onGraphDataWindowChange();
+		this._onGraphDataWindowChange( prevGraphDataWindow );
 	this.render();
 	
 	event.preventDefault();
@@ -257,6 +263,8 @@ GraphController.prototype._onTouchStart = function( event )
 
 GraphController.prototype._onTouchMove = function( event )
 {
+	var prevGraphDataWindow = GraphController._cloneGraphDataWindow( this._graphDataWindow );
+	
 	// Make a copy of previous touches
 	var prevTouches = GraphController._cloneTouches( this._touches );
 
@@ -279,7 +287,7 @@ GraphController.prototype._onTouchMove = function( event )
 	}
 	
 	if ( this._onGraphDataWindowChange )
-		this._onGraphDataWindowChange();
+		this._onGraphDataWindowChange( prevGraphDataWindow );
 	this.render();
 	
 	event.preventDefault();
@@ -296,6 +304,17 @@ GraphController.prototype._onTouchEnd = function( event )
 	}
 
 	event.preventDefault();
+};
+
+GraphController._cloneGraphDataWindow = function( graphDataWindow )
+{
+	var clonedGraphDataWindow = {
+		x: graphDataWindow.x,
+		y: graphDataWindow.y,
+		width: graphDataWindow.width,
+		height: graphDataWindow.height
+	};
+	return clonedGraphDataWindow;
 };
 
 GraphController._getTouchesFromEvent = function( event )
