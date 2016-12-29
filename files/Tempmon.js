@@ -5,10 +5,16 @@
 */	
 function Tempmon( canvas, deviceID, initialDate, autoscroll )
 {
+	var now = new Date();
 	if ( !initialDate )
-		initialDate = new Date();
-
-	this._autoscroll = autoscroll || false;
+	{
+		initialDate = now;
+	}
+/*	else if ( initialDate>now )
+	{
+		initialDate = now;
+	}
+*/	this._autoscroll = autoscroll || false;
 
 	var initialWidth = 2000 * GraphDataFetcher._messageIntervalMs;
 	var initialX = initialDate.getTime() - (initialWidth/2);
@@ -56,7 +62,7 @@ function Tempmon( canvas, deviceID, initialDate, autoscroll )
 		drawOriginAxes: true,
 		drawDataRange: true,
 		drawDataGaps: true,
-		contiguityThreshold: GraphDataFetcher._messageIntervalMs*1.02,		
+		contiguityThreshold: GraphDataFetcher._messageIntervalMs,		
 		textSize: 12,
 		numMaxLinesX: 5,
 		numMaxLinesY: 5,
@@ -89,7 +95,8 @@ function Tempmon( canvas, deviceID, initialDate, autoscroll )
 
 	// When the user navigates in the graph (i.e. changes the graph data window), we need to check whether more data needs to be fetched
 	this._graphController._onGraphDataWindowChange = this._onGraphDataWindowChange.bind(this);
-
+	this._graphController._onRendered = this._onRendered.bind(this);
+	
 	// Whenever the window resizes, we need to recalculate a few graph options to adjust to the new size
 	window.addEventListener( "resize", this._onResize.bind(this) );
 
@@ -233,6 +240,44 @@ Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
 {
 	//console.log("_fetchDataToFillGraphDataWindow");
 	if ( this._graphDataFetcher.isFetching() )
+		return null;
+	
+	var promise = null;
+	if ( !this._graphDataFetcher.getXMax() ||
+		 this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher.getXMax() )
+	{
+		promise = this._graphDataFetcher.fetchDataForward();
+	}
+	
+	if ( !promise && this._graphDataWindow.x<this._graphDataFetcher.getXMin() )
+	{	
+		promise = this._graphDataFetcher.fetchDataBackward();
+	}
+
+	if ( promise )
+	{
+		promise = promise 
+			.then(
+				function()
+				{
+				//	if ( this._autoscroll )
+				//		this._scrollToLatestData();
+					this._graphController.render();
+					var nextPromise = this._fetchDataToFillGraphDataWindow();
+					if ( !nextPromise )
+						return Promise.resolve();
+					return nextPromise;
+				}.bind(this))
+			.catch(
+				function( error )
+				{
+					alert( error.toString() );
+				}.bind(this));
+	}
+
+	return promise;
+
+	/*if ( this._graphDataFetcher.isFetching() )
 		return Promise.reject();	
 
 	if ( this._autoscroll )
@@ -279,30 +324,49 @@ Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
 		promise = Promise.resolve();
 	}
 
-	return promise;
+	return promise;*/
 };
 
 Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
 {
-	if ( this.getAutoscroll() )
+	/*if ( this.getAutoscroll() )
 	{
 		if ( this._graphDataWindow.x!==prevGraphDataWindow.x )
 		{
 			this.setAutoscroll( false );
 		}
-	}
+	}*/
 
 	if ( !this.getAutoscroll() )
 	{	
-		if ( !this._graphDataFetcher.isFetching() )
-		{
-			this._fetchDataToFillGraphDataWindow();
-		}
+		this._fetchDataToFillGraphDataWindow();
 	}
 };
 
 Tempmon.prototype._onRendered = function()
 {
+	var canvas = this._graphController._canvas;
+
+	var canvasWidth = canvas.width;
+	var canvasHeight = canvas.height;
+	var context = canvas.getContext("2d");
+
+	//this._graphDataWindow 
+	context.strokeStyle = "#FF4444";
+	context.fillStyle = "rgba(0,0,20,0.3)";
+	var xmax = this._graphDataFetcher.getXMax();
+	if ( xmax!==null )
+	{	
+		var pt = GraphDataPresenter.graphDataPointToCanvasPoint( {x:xmax, y:0}, this._graphDataWindow, canvas );
+		context.fillRect( pt.x, 0, 2, canvasHeight);	
+	}
+
+	var xmin = this._graphDataFetcher.getXMin();
+	if ( xmin!==null )
+	{	
+		var pt = GraphDataPresenter.graphDataPointToCanvasPoint( {x:xmin, y:0}, this._graphDataWindow, canvas );
+		context.fillRect( pt.x, 0, 2, canvasHeight);	
+	}
 };	
 
 Tempmon.prototype._onResize = function( event )

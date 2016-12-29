@@ -17,12 +17,13 @@ function GraphDataFetcher(deviceID, limit, firstFetchBeforeTimeMs)
 	this._limit = limit;
 	this._firstFetchBeforeTimeMs = firstFetchBeforeTimeMs;	// The first fetch request will use this 'beforeTime' if specified
 	this._graphData = [];		// An array of {x:<epoch time in milliseconds>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
-	this._finalXMin = null;		// The most ancient possible x value on the backend. There's no data available before that point. When it is null, we don't know it yet
-	this._finalXMax = null;		// The most recent x value on the backend. There's no data available (yet!) after that point. When null, we don't know it, but we'll query it quickly on first fetch
+	this._xmin = null;			// The most ancient possible x value on the backend. There's no data available before that point. When it is null, we don't know it yet
+	this._xminFinal = false;
+	this._xmax = null;		// The most recent x value on the backend. There's no data available (yet!) after that point. When null, we don't know it, but we'll query it quickly on first fetch
 	this._promiseInProgress = null;
 }
 
-GraphDataFetcher._messageIntervalMs = 10*60*1000;	// Theoritical interval in milliseconds between weather messages. In practise, it's slightly more
+GraphDataFetcher._messageIntervalMs = 10.2*60*1000;	// Theoritical interval in milliseconds between weather messages. In practise, it's slightly more
 
 GraphDataFetcher.prototype.isFetching = function()
 {
@@ -43,23 +44,23 @@ GraphDataFetcher.prototype.getDataXMin = function()
 	return this._graphData[this._graphData.length-1].x;
 };
 
-GraphDataFetcher.prototype.getDataFinalXMin = function()
+GraphDataFetcher.prototype.getXMin = function()
 {
-	return this._finalXMin;
+	return this._xmin;
 };
 
-GraphDataFetcher.prototype.getDataFinalXMax = function()
+GraphDataFetcher.prototype.getXMax = function()
 {
-	return this._finalXMax;
+	return this._xmax;
 };
 
 GraphDataFetcher.prototype.canFetchDataForward = function()
 {
-	if ( !this.getDataFinalXMax() )
+	if ( !this.getXMax() )
 		return true;
 
 	var now = new Date().getTime();
-	var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - this.getDataXMax()) / (GraphDataFetcher._messageIntervalMs*1.02) );
+	var expectedNumberOfMessagesReadyForFetch = Math.floor( (now - this.getXMax()) / GraphDataFetcher._messageIntervalMs );
 	if ( expectedNumberOfMessagesReadyForFetch<=0 )
 		return false;
 	
@@ -70,30 +71,30 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 {
 	//console.log("fetchDataForward");
 	if ( this.isFetching() )
-		return Promise.reject();
+		return null;
 
-	if ( !this.canFetchDataForward() )
-	{
-		if ( this.getDataFinalXMax() )
-			return Promise.reject( new Error("GraphDataFetcher has reached most recent data point. No more data to fetch") );
+	if ( !this.canFetchDataForward() )			// JBM: to enable
+		return null;
+
+	var now = new Date().getTime();
+	var x = this.getXMax();
+	if ( x===null )
+	{ 
+		if ( this._firstFetchBeforeTimeMs )
+		{	
+			x = this._firstFetchBeforeTimeMs;
+		}
+		else
+		{
+			x = now;
+		}
 	}
 
-	var lastTimeMs = null;
-	if ( this.getDataXMax() )
-	{	
-		lastTimeMs = this.getDataXMax();
-	}
-	else if ( this._firstFetchBeforeTimeMs )
-	{	
-		lastTimeMs = this._firstFetchBeforeTimeMs;
-	}
+	x += GraphDataFetcher._messageIntervalMs * this._limit * 0.9;	// The 0.9 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
+	if ( x>now )
+		x = now;
 
-	var beforeTimeInSeconds = null;
-	if ( lastTimeMs )
-	{
-		var beforeTimeMs = lastTimeMs + (GraphDataFetcher._messageIntervalMs*1.02) * (this._limit * 0.9);	// The 0.9 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
-		beforeTimeInSeconds = Math.floor( beforeTimeMs / 1000 );
-	}
+	var beforeTimeInSeconds = Math.floor(x/1000);
 
 	var uri = GraphDataFetcher._getUri( this._deviceID, this._limit, beforeTimeInSeconds );
 	var promise = HttpRequest.request( uri, 'GET')
@@ -116,18 +117,28 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 					newGraphData = newGraphData2;
 				}
 
+				// Insert new graph data in front of the data we've got 
 				if ( newGraphData.length>0 )
 				{
-					// Insert new graph data in front of the data we've got 
 					for ( var i=newGraphData.length-1; i>=0; i-- )
 						this._graphData.unshift( newGraphData[i] );	
 				}
+				
+				if ( !this._xmax && newGraphData.length>0 && now-newGraphData[0].x<GraphDataFetcher._messageIntervalMs ) 
+				{
+					this._xmax = newGraphData[0].x;
+				}
 				else
 				{
-					if ( this._graphData.length>0 )
-						this._finalXMax = this._graphData[0].x;
+					this._xmax = x;
+				}
+
+				if ( !this._xmin )
+				{
+					if ( newGraphData.length>0 )
+						this._xmin = newGraphData[newGraphData.length-1].x;		// newGraphData and this._graphData should be the same as this should be the first fetch
 					else
-						console.warn("No data on server?");
+						this._xmin = this._xmax;
 				}
 
 				this._promiseInProgress = null;
@@ -148,33 +159,33 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 GraphDataFetcher.prototype.canFetchDataBackward = function()
 {
 	// Once we've identified the final x min, we know there's nothing more to fetch ever
-	return this.getDataFinalXMin();
+	//return this.getXMin();
+	return !this._xminFinal;
 };
 
 GraphDataFetcher.prototype.fetchDataBackward = function()
 {
 	//console.log("fetchDataBackward");
 	if ( this.isFetching() )
-		return Promise.reject( new Error("GraphDataFetcher is already fetching data") );
+		return null;
 
 	if ( !this.canFetchDataBackward() )
-		return Promise.reject( new Error("GraphDataFetcher has reached most ancient data point. No more data to fetch") );
+		return null;
 
-	var lastTimeMs = null;
-	if ( this.getDataXMin() )
-	{	
-		lastTimeMs = this.getDataXMin();
-	}
-	else if ( this._firstFetchBeforeTimeMs )
-	{	
-		lastTimeMs = this._firstFetchBeforeTimeMs;
+	var x = this.getXMin();
+	if ( x===null )
+	{ 
+		if ( this._firstFetchBeforeTimeMs )
+		{	
+			x = this._firstFetchBeforeTimeMs;
+		}
+		else
+		{
+			x = new Date().getTime();
+		}
 	}
 
-	var beforeTimeInSeconds = null;
-	if ( lastTimeMs )
-	{
-		beforeTimeInSeconds = Math.floor( lastTimeMs / 1000 );
-	}
+	var beforeTimeInSeconds = Math.floor(x/1000);
 
 	var uri = GraphDataFetcher._getUri( this._deviceID, this._limit, beforeTimeInSeconds );
 	var promise = HttpRequest.request( uri, 'GET')
@@ -197,18 +208,26 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 					newGraphData = newGraphData2;
 				}
 
+				// Push new graph data at the end of the data we've got 
 				if ( newGraphData.length>0 )
 				{
-					// Push new graph data at the end of the data we've got 
 					for ( var i=0; i<newGraphData.length; ++i )
 						this._graphData.push( newGraphData[i] );	
 				}
+				
+				if ( newGraphData.length>0 )
+				{
+					this._xmin = newGraphData[newGraphData.length-1].x;
+				}
 				else
 				{
-					if ( this._graphData.length>0 )
-						this._finalXMin = this._graphData[this._graphData.length-1].x;	
-					else
-						console.warn("No data on server?");
+					this._xmin = x;		
+					this._xminFinal = true;
+				}
+					
+				if ( !this._xmax )
+				{
+					this._xmax = x;
 				}
 
 				this._promiseInProgress = null;
