@@ -66,13 +66,13 @@ GraphDataFetcher.prototype.canFetchDataForward = function()
 	return true;
 };
 
-GraphDataFetcher.prototype.fetchDataForward = function( fetchPastMostRecent )
+GraphDataFetcher.prototype.fetchDataForward = function()
 {
 	//console.log("fetchDataForward");
 	if ( this.isFetching() )
 		return Promise.reject();
 
-	if ( !fetchPastMostRecent )
+	if ( !this.canFetchDataForward() )
 	{
 		if ( this.getDataFinalXMax() )
 			return Promise.reject( new Error("GraphDataFetcher has reached most recent data point. No more data to fetch") );
