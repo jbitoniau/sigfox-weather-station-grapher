@@ -112,18 +112,16 @@ var server = http.createServer(
 
 function Main()
 {
-	console.log("Starting server...");
-	console.log("Loading credentials...");
 	fs.readFile('SigfoxBackendAuth.txt', 'utf8', 
 		function (err,data) 
 		{
-			console.log("Credentials loaded");
 	  		if (err) {
 	    		return console.error(err);
 	  		}
 	  		sigfoxBackendAuth = data;
 		});
-	server.listen(8080);
+	server.listen(80);
+	console.log("WeatherGrapher server started");
 }
 
 Main();
