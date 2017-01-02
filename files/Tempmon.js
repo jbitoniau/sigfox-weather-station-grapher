@@ -104,6 +104,7 @@ function Tempmon( canvas, deviceID, initialDate, autoscroll )
 	this._onAutoscrollChanged = null;
 
 	this._forwardFetchTimeout = null;
+	this._onFetch = null;			// fun( state )		// with state 'started', 'ok', 'error'
 
 	// Initialize for current size
 	this._onResize();
@@ -178,16 +179,47 @@ Tempmon.prototype._scrollToLatestData = function()
 
 Tempmon.prototype._fetchData = function()
 {
+	var promise = null;
 	if ( this._autoscroll )
-		return this._fetchDataForAutoscroll();
+		promise = this._fetchDataForAutoscroll();
 	else
-		return this._fetchDataToFillGraphDataWindow();
+		promise = this._fetchDataToFillGraphDataWindow();
+
+	if ( promise )
+	{
+		if ( this._onFetch )
+			this._onFetch('started');
+
+		promise = promise
+			.then(	
+				function()
+				{
+					if ( this._autoscroll )
+						this._scrollToLatestData();
+					this._graphController.render();
+
+					if ( this._onFetch )
+						this._onFetch('ok');
+
+					var nextPromise = this._fetchData();
+					if ( !nextPromise )
+						return Promise.resolve();
+					return nextPromise;
+				}.bind(this))
+			.catch(
+				function( error )
+				{
+					if ( this._onFetch )
+						this._onFetch('error');
+				}.bind(this));
+	}
+	return promise;
 };
 
 Tempmon.prototype._fetchDataForAutoscroll = function()
 {
 	var promise = null;
-	if ( !promise && this._graphDataFetcher.canFetchDataForward() ) 
+	if ( this._graphDataFetcher.canFetchDataForward() ) 
 	{
 		promise = this._graphDataFetcher.fetchDataForward();
 	}
@@ -197,28 +229,6 @@ Tempmon.prototype._fetchDataForAutoscroll = function()
 		// we need to complete the window once forward fetching is done
 		promise = this._fetchDataToFillGraphDataWindow();
 	}
-
-	if ( promise )
-	{
-		promise = promise
-			.then(
-				function()
-				{
-					if ( this._autoscroll )
-						this._scrollToLatestData();
-					this._graphController.render();
-					var nextPromise = this._fetchData();
-					if ( !nextPromise )
-						return Promise.resolve();
-					return nextPromise;
-				}.bind(this))
-			.catch(
-				function( error )
-				{
-					alert( error.toString() );
-				}.bind(this));
-	}
-	
 	return promise;
 };
 
@@ -235,78 +245,7 @@ Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
 	{	
 		promise = this._graphDataFetcher.fetchDataBackward();
 	}
-
-	if ( promise )
-	{
-		promise = promise 
-			.then(
-				function()
-				{
-				//	if ( this._autoscroll )
-				//		this._scrollToLatestData();
-					this._graphController.render();
-					var nextPromise = this._fetchData();
-					if ( !nextPromise )
-						return Promise.resolve();
-					return nextPromise;
-				}.bind(this))
-			.catch(
-				function( error )
-				{
-					alert( error.toString() );
-				}.bind(this));
-	}
-
 	return promise;
-
-	/*if ( this._graphDataFetcher.isFetching() )
-		return Promise.reject();	
-
-	if ( this._autoscroll )
-		return this._fetchDataForAutoscroll();
-
-	var promise = null;
-	if ( this._graphDataFetcher._graphData.length===0 && this._graphDataFetcher.canFetchDataForward() )
-	{
-		// This is the first data fetch, use forward fetch 
-		promise = this._graphDataFetcher.fetchDataForward();
-	}
-
-	// Do we need to fetch data forward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x+this._graphDataWindow.width>this._graphDataFetcher.getDataXMax() && this._graphDataFetcher.canFetchDataForward() )
-	{
-		promise = this._graphDataFetcher.fetchDataForward();
-	}
-
-	// Do we need to fetch data backward based on current graph data window?
-	if ( !promise && this._graphDataWindow.x<this._graphDataFetcher.getDataXMin() && this._graphDataFetcher.canFetchDataBackward() )
-	{	
-		promise = this._graphDataFetcher.fetchDataBackward();
-	}
-
-	if ( promise )
-	{
-		promise = promise 
-			.then(
-				function()
-				{
-					if ( this._autoscroll )
-						this._scrollToLatestData();
-					this._graphController.render();
-					return this._fetchDataToFillGraphDataWindow();
-				}.bind(this))
-			.catch(
-				function( error )
-				{
-					alert( error.toString() );
-				}.bind(this));
-	}
-	else
-	{
-		promise = Promise.resolve();
-	}
-
-	return promise;*/
 };
 
 Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
@@ -319,10 +258,7 @@ Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
 		}
 	}
 
-	if ( !this.getAutoscroll() )
-	{	
-		this._fetchDataToFillGraphDataWindow();
-	}
+	this._fetchData();
 };
 
 Tempmon.prototype._onRendered = function()
