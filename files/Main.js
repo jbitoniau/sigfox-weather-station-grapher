@@ -1,5 +1,12 @@
 'use strict';
 
+/*
+	Main
+
+	Start the grapher using the device specified in the URL and the optional starting date string.
+	Here is an example URL for device id '2A88E' using 24th of December 2016 as a starting date:
+	www.serverxyz.com/devices/2A88E?date=12/24/2016
+*/	
 function Main()
 {
 	var deviceID = window.location.pathname.substr( ('/devices/').length );
@@ -22,15 +29,8 @@ function Main()
 	}
 	var canvas = document.getElementById('graphCanvas');
 	canvas.focus();
-
-	/*var startDate = new Date( Date.parse("December 20, 2016, 16:14:00") );
-	var startDate = new Date( Date.parse("January 14, 2017, 16:14:00") );
-	var startDate = null;
-	var startDate = new Date( Date.parse("November 6, 2016, 16:14:00") );
-	var startDate = new Date( Date.parse("November 19, 2016, 16:00:00") );
-	var startDate = new Date( Date.parse("December 26, 2016, 9:14:00") );	*/
 	
-	var tempmon = new Tempmon( canvas, deviceID, date, autoscroll );
+	var weatherGrapher = new WeatherGrapher( canvas, deviceID, date, autoscroll );
 
 	var buttons = {
 		'temperature' : document.getElementById('temperatureButton'),
@@ -45,13 +45,13 @@ function Main()
 		button.onclick = function( event ) 
 			{	
 				var graphDataType = event.target.graphDataType;
-				tempmon.setGraphDataType(graphDataType);
+				weatherGrapher.setGraphDataType(graphDataType);
 			};
 	}
 
-	buttons[tempmon._graphDataType].className = "roundedButtonToggled";
+	buttons[weatherGrapher._graphDataType].className = "roundedButtonToggled";
 
-	tempmon._onGraphDataTypeChanged = function( prevGraphDataType, graphDataType )
+	weatherGrapher._onGraphDataTypeChanged = function( prevGraphDataType, graphDataType )
 		{
 			var prevButton = buttons[prevGraphDataType];
 			prevButton.className = "roundedButton";
@@ -64,18 +64,18 @@ function Main()
 	var autoscrollButton = document.getElementById('autoscrollButton');
 	autoscrollButton.onclick = function( event ) 
 		{	
-			var autoscroll = !tempmon.getAutoscroll();
-			tempmon.setAutoscroll(autoscroll);
+			var autoscroll = !weatherGrapher.getAutoscroll();
+			weatherGrapher.setAutoscroll(autoscroll);
 		};
-	tempmon._onAutoscrollChanged = function()
+	weatherGrapher._onAutoscrollChanged = function()
 		{
-			var autoscroll = tempmon.getAutoscroll();
+			var autoscroll = weatherGrapher.getAutoscroll();
 			if ( autoscroll )
 				autoscrollButton.className = "roundedButtonToggled";
 			else
 				autoscrollButton.className = "roundedButton";
 		};
-	tempmon._onAutoscrollChanged();
+	weatherGrapher._onAutoscrollChanged();
 
 
 	var fetchIndicator = document.getElementById('fetchIndicator');
@@ -85,7 +85,7 @@ function Main()
 			fetchIndicator.className = null;
 		};
 	var fetchIndicatorRemoveTimeout = null;
-	tempmon._onFetch = function( state )
+	weatherGrapher._onFetch = function( state )
 		{
 			var color = null;
 			switch ( state )

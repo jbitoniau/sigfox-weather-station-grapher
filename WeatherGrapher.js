@@ -89,7 +89,6 @@ var server = http.createServer(
 	function(req, res)
 	{
 		//console.log("HTTP request: " + req.url );
-
 		var path = url.parse(req.url).pathname;
 		var query = url.parse(req.url).query; 
 		if ( path.indexOf('/api/')===0 )
@@ -103,14 +102,14 @@ var server = http.createServer(
 		}
 		else if ( path.indexOf('/devices/')===0 )
 		{
-			fs.readFile('Tempmon.html', 'utf8', 
-			function (err,data) 
-			{
-		  		if (err) {
-		    		return console.error(err);
-		  		}
-		  		res.end(data);
-			});
+			fs.readFile('WeatherGrapher.html', 'utf8', 
+				function (err,data) 
+				{
+			  		if (err) {
+			    		return console.error(err);
+			  		}
+			  		res.end(data);
+				});
 		}
 		else
 		{
@@ -118,25 +117,21 @@ var server = http.createServer(
 		}
 	});
 
+function Main()
+{
+	console.log("Starting server...");
+	console.log("Loading credentials...");
+	fs.readFile('SigfoxBackendAuth.txt', 'utf8', 
+		function (err,data) 
+		{
+			console.log("Credentials loaded");
+	  		if (err) {
+	    		return console.error(err);
+	  		}
+	  		sigfoxBackendAuth = data;
+		});
+	server.listen(8080);
+}
 
-console.log("Starting server...");
+Main();
 
-console.log("Loading credentials...");
-fs.readFile('SigfoxBackendAuth.txt', 'utf8', 
-	function (err,data) 
-	{
-		console.log("Credentials loaded");
-  		if (err) {
-    		return console.error(err);
-  		}
-  		sigfoxBackendAuth = data;
-	});
-
-server.on('close', 
-	function()
-	{
-		console.log("Closing server...");
-	});
-
-server.listen(8080);
-//server.close();

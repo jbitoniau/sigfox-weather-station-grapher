@@ -1,20 +1,16 @@
 'use strict';
 
 /*
-	Tempmon
+	WeatherGrapher
 */	
-function Tempmon( canvas, deviceID, initialDate, autoscroll )
+function WeatherGrapher( canvas, deviceID, initialDate, autoscroll )
 {
 	var now = new Date();
 	if ( !initialDate )
 	{
 		initialDate = now;
 	}
-/*	else if ( initialDate>now )
-	{
-		initialDate = now;
-	}
-*/	this._autoscroll = autoscroll || false;
+	this._autoscroll = autoscroll || false;
 
 	var initialWidth = 200 * GraphDataFetcher._messageIntervalMs;
 	var initialX = initialDate.getTime() - (initialWidth/2);
@@ -121,7 +117,7 @@ function Tempmon( canvas, deviceID, initialDate, autoscroll )
 		10 * 1000 );	
 }
 
-Tempmon.prototype.setGraphDataType = function( graphDataType )
+WeatherGrapher.prototype.setGraphDataType = function( graphDataType )
 {
 	if ( graphDataType===this._graphDataType )
 		return;
@@ -142,7 +138,7 @@ Tempmon.prototype.setGraphDataType = function( graphDataType )
 		this._onGraphDataTypeChanged( prevGraphDataType, this._graphDataType );
 };
 
-Tempmon.prototype.setAutoscroll = function( autoscroll )
+WeatherGrapher.prototype.setAutoscroll = function( autoscroll )
 {
 	if ( this._autoscroll===autoscroll )
 		return;
@@ -160,14 +156,14 @@ Tempmon.prototype.setAutoscroll = function( autoscroll )
 		this._onAutoscrollChanged();
 };
 
-Tempmon.prototype.getAutoscroll = function()
+WeatherGrapher.prototype.getAutoscroll = function()
 {
 	return this._autoscroll;
 };
 
 // Change the x position of the graph data window to show the latest data points.
 // This method doesn't affect the other graph data window properties.
-Tempmon.prototype._scrollToLatestData = function()
+WeatherGrapher.prototype._scrollToLatestData = function()
 {
 	var graphData = this._graphDataFetcher._graphData;
 	if ( graphData.length===0 )
@@ -177,7 +173,7 @@ Tempmon.prototype._scrollToLatestData = function()
 	this._graphDataWindow.x = latestDataPoint.x - this._graphDataWindow.width;
 };
 
-Tempmon.prototype._fetchData = function()
+WeatherGrapher.prototype._fetchData = function()
 {
 	var promise = null;
 	if ( this._autoscroll )
@@ -216,7 +212,7 @@ Tempmon.prototype._fetchData = function()
 	return promise;
 };
 
-Tempmon.prototype._fetchDataForAutoscroll = function()
+WeatherGrapher.prototype._fetchDataForAutoscroll = function()
 {
 	var promise = null;
 	if ( this._graphDataFetcher.canFetchDataForward() ) 
@@ -232,7 +228,7 @@ Tempmon.prototype._fetchDataForAutoscroll = function()
 	return promise;
 };
 
-Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
+WeatherGrapher.prototype._fetchDataToFillGraphDataWindow = function()
 {
 	var promise = null;
 	if ( !this._graphDataFetcher.getXMax() ||
@@ -248,7 +244,7 @@ Tempmon.prototype._fetchDataToFillGraphDataWindow = function()
 	return promise;
 };
 
-Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
+WeatherGrapher.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
 {
 	if ( this.getAutoscroll() )
 	{
@@ -261,7 +257,7 @@ Tempmon.prototype._onGraphDataWindowChange = function( prevGraphDataWindow )
 	this._fetchData();
 };
 
-Tempmon.prototype._onRendered = function()
+WeatherGrapher.prototype._onRendered = function()
 {
 	var canvas = this._graphController._canvas;
 
@@ -287,14 +283,14 @@ Tempmon.prototype._onRendered = function()
 	}
 };	
 
-Tempmon.prototype._onResize = function( event )
+WeatherGrapher.prototype._onResize = function( event )
 {
 	this._updateLinesOptions();
 	this._updatePointsOptions();
 	this._graphController.render();
 };
 
-Tempmon.prototype._updateLinesOptions = function()		 
+WeatherGrapher.prototype._updateLinesOptions = function()		 
 {
 	var canvas = this._graphController._canvas;
 	var width = canvas.clientWidth;
@@ -318,7 +314,7 @@ Tempmon.prototype._updateLinesOptions = function()
 	this._graphOptions.numMaxLinesY = numMaxLinesY;
 };
 
-Tempmon.prototype._updatePointsOptions = function()
+WeatherGrapher.prototype._updatePointsOptions = function()
 {
 	var canvas = this._graphController._canvas;
 	var width = canvas.clientWidth;
