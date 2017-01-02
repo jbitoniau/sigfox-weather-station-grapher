@@ -607,7 +607,7 @@ GraphDataPresenter.drawLinesY = function( context, canvas, graphDataWindow, getL
 		if ( getLinesText )
 		{
 			var text = getLinesText(y, yspacing);
-			if ( text )
+			if ( text!==null || text!==undefined )
 			{
 				context.fillText(text, canvasWidth-context.measureText(text).width-5, canvasPoint.y-2);
 			}
@@ -643,7 +643,7 @@ GraphDataPresenter.drawLinesX = function( context, canvas, graphDataWindow, getL
 		if ( getLinesText )
 		{
 			var text = getLinesText(x, xspacing);
-			if ( text )
+			if ( text!==null || text!==undefined )
 			{
 				context.fillText(text, canvasPoint.x+2, canvasHeight-5);
 			}
