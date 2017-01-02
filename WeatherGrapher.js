@@ -102,14 +102,7 @@ var server = http.createServer(
 		}
 		else if ( path.indexOf('/devices/')===0 )
 		{
-			fs.readFile('WeatherGrapher.html', 'utf8', 
-				function (err,data) 
-				{
-			  		if (err) {
-			    		return console.error(err);
-			  		}
-			  		res.end(data);
-				});
+			serveFile( 'WeatherGrapher.html', res );
 		}
 		else
 		{
