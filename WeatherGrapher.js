@@ -118,7 +118,7 @@ function Main()
 	  		if (err) {
 	    		return console.error(err);
 	  		}
-	  		sigfoxBackendAuth = data;
+	  		sigfoxBackendAuth = data.trim();
 		});
 	server.listen(80);
 	console.log("WeatherGrapher server started");
