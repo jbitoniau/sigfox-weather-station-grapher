@@ -101,7 +101,7 @@ function Main()
 				case 'ok': 
 					fetchIndicator.style.backgroundColor = 'green';
 					fetchIndicator.className = null;
-					fetchIndicatorRemoveTimeout = setTimeout( fetchIndicatorRemove, 3000 );
+					fetchIndicatorRemoveTimeout = setTimeout( fetchIndicatorRemove, 1000 );
 					break;
 				case 'error': 
 					fetchIndicator.style.backgroundColor = 'red';
