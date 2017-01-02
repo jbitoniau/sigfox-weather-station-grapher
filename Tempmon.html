@@ -42,6 +42,15 @@
 			outline:0;
 			box-shadow: 0 0 4px grey;
 		}
+
+		/* http://stackoverflow.com/questions/16344354/how-to-make-blinking-flashing-text-with-css3 */
+		/* This is very expensive on mobile */
+		.blink {
+  		/*	animation: blinker 0.5s ease-out infinite;*/	
+		}
+		@keyframes blinker {  
+		  50% { opacity: 0; }
+		}
 	</style>
 	
 	<body>
@@ -63,6 +72,10 @@
 							</g>
 						</svg>
 					</button>
+				</div>
+
+				<div style="position:absolute; top:5px; right:5px;">
+					<div id="fetchIndicator" style="width:17px; height:17px"/>
 				</div>
 			</div>
 		</div>
