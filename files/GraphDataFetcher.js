@@ -11,11 +11,11 @@
 	fetchData is called from most recent time to further and further away back
 	in time.
 */
-function GraphDataFetcher(deviceID, limit, firstFetchBeforeTimeMs)
+function GraphDataFetcher(deviceID, limit, firstFetchTimeMs)
 {
 	this._deviceID = deviceID;
 	this._limit = limit;
-	this._firstFetchBeforeTimeMs = firstFetchBeforeTimeMs;	// The first fetch request will use this 'beforeTime' if specified
+	this._firstFetchTimeMs = firstFetchTimeMs;	// The first fetch request will use this 'beforeTime' if specified
 	this._graphData = [];		// An array of {x:<epoch time in milliseconds>, temperature:<in celsius>, pressure:<in hPa>, humidity:<in percent>}
 	this._xmin = null;			// The most ancient possible x value on the backend. There's no data available before that point. When it is null, we don't know it yet
 	this._xminFinal = false;
@@ -28,20 +28,6 @@ GraphDataFetcher._messageIntervalMs = 10.2*60*1000;	// Theoritical interval in m
 GraphDataFetcher.prototype.isFetching = function()
 {
 	return !!this._promiseInProgress;
-};
-
-GraphDataFetcher.prototype.getDataXMax = function()
-{
-	if ( this._graphData.length===0 )
-		return null;
-	return this._graphData[0].x;
-};
-
-GraphDataFetcher.prototype.getDataXMin = function()
-{
-	if ( this._graphData.length===0 )
-		return null;
-	return this._graphData[this._graphData.length-1].x;
 };
 
 GraphDataFetcher.prototype.getXMin = function()
@@ -78,7 +64,7 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 
 	var x = this.getXMax();
 	if ( x===null )
-		x = this._firstFetchBeforeTimeMs;
+		x = this._firstFetchTimeMs;
 
 	x += GraphDataFetcher._messageIntervalMs * this._limit * 0.9;	// The 0.9 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
 		
@@ -103,7 +89,7 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 				// Remove from new graph data the data we've already got 
 				if ( this._graphData.length>0 )
 				{			
-					var xmax = this.getDataXMax();
+					var xmax = this._graphData[0].x;
 					var newGraphData2 = [];
 					for ( var i=newGraphData.length-1; i>=0; i-- )
 					{
@@ -146,7 +132,7 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 			{
 				this._promiseInProgress = null;
 				throw error;
-			});
+			}.bind(this));
 
 	this._promiseInProgress = promise;
 	return promise;
@@ -171,9 +157,9 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 	var x = this.getXMin();
 	if ( x===null )
 	{ 
-		if ( this._firstFetchBeforeTimeMs )
+		if ( this._firstFetchTimeMs )
 		{	
-			x = this._firstFetchBeforeTimeMs;
+			x = this._firstFetchTimeMs;
 		}
 		else
 		{
@@ -194,7 +180,7 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 				// Remove from new graph data the data we've already got 
 				if ( this._graphData.length>0 )
 				{			
-					var xmin = this.getDataXMin();
+					var xmin = this._graphData[this._graphData.length-1].x;
 					var newGraphData2 = [];
 					for ( var i=0; i<newGraphData.length; ++i )
 					{
@@ -235,7 +221,7 @@ GraphDataFetcher.prototype.fetchDataBackward = function()
 			{
 				this._promiseInProgress = null;
 				throw error;
-			});
+			}.bind(this));
 
 	this._promiseInProgress = promise;
 	return promise;
