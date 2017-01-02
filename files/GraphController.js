@@ -232,6 +232,7 @@ GraphController.prototype._onWheel = function( event )
 	this.render();
 	
 	event.preventDefault();
+	event.stopPropagation();
 };
 
 GraphController._getCanvasPointFromMouseEvent = function( event )

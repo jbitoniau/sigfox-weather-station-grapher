@@ -76,23 +76,19 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 	if ( !this.canFetchDataForward() )			// JBM: to enable
 		return null;
 
-	var now = new Date().getTime();
 	var x = this.getXMax();
 	if ( x===null )
-	{ 
-		if ( this._firstFetchBeforeTimeMs )
-		{	
-			x = this._firstFetchBeforeTimeMs;
-		}
-		else
-		{
-			x = now;
-		}
-	}
+		x = this._firstFetchBeforeTimeMs;
 
 	x += GraphDataFetcher._messageIntervalMs * this._limit * 0.9;	// The 0.9 factor is to allow a bit of overlap between the messages we're requesting and the ones we've got already
+		
+	// We can't fetch data past the current time of the backend server (it'd reply with an error).
+	// So any request for fetch data forward in the future is clamped to current time.
+	// Because our UTS time now might be slightly different, we're cautious a little time from 
+	// it so we should be safe
+	var now = new Date().getTime() - GraphDataFetcher._messageIntervalMs/2;
 	if ( x>now )
-		x = now;
+		x = now;		
 
 	var beforeTimeInSeconds = Math.floor(x/1000);
 
@@ -124,11 +120,11 @@ GraphDataFetcher.prototype.fetchDataForward = function()
 						this._graphData.unshift( newGraphData[i] );	
 				}
 				
-				if ( !this._xmax && newGraphData.length>0 && now-newGraphData[0].x<GraphDataFetcher._messageIntervalMs ) 
+			/*	if ( !this._xmax && newGraphData.length>0 && now-newGraphData[0].x<GraphDataFetcher._messageIntervalMs ) 
 				{
 					this._xmax = newGraphData[0].x;
 				}
-				else
+				else*/
 				{
 					this._xmax = x;
 				}
