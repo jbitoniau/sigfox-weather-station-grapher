@@ -3,13 +3,15 @@ sigfox-weather-station-grapher
 
 A web-based graphical viewer for the sigfox-weather-station program running on SmartEverything board.
 
-[![Weather Grapher](http://img.youtube.com/vi/.../0.jpg)](http://www.youtube.com/watch?v=...)
+[![Weather Grapher](http://img.youtube.com/vi/hCRymmEQuNM/0.jpg)](http://www.youtube.com/watch?v=hCRymmEQuNM)
 
-More information about this project can be found here: http://bitoniau.blogspot.fr/2014/04/....html
+[![Weather Grapher](http://img.youtube.com/vi/41TDwdpSg_o/0.jpg)](http://www.youtube.com/watch?v=41TDwdpSg_o)
+
+More information about this project can be found here: https://bitoniau.blogspot.fr/2017/01/sigfox-weather-station-grapher.html
 
 # Installation
 ## Creating a Sigfox backend API access
-You first need to create an API access for the SmartEverything device on the Sigfox backend (so the Weather Grapher server can fetch data from it). To do that:
+You first need to create an API access for your SmartEverything device on the Sigfox backend (so the Weather Grapher server can fetch data from it). To do that:
 - Log onto the Sigfox backend using your credentials
 - Go to the 'Group' tab
 - Click the group in the list
