@@ -239,24 +239,7 @@ GraphDataFetcher._getGraphDataFromSigfoxMessages = function( messages )
 		// Sigfox message timestamp is a UTC/GMT time expressed in seconds since Unix Epoch (1st of January 1970)
 		// Graph data x axis is in milliseconds
 		var x = message.time * 1000;	
-		if ( weatherData.temperature<-100 || weatherData.temperature>100 )
-		{ 
-			console.warn("Invalid temperature: " + weatherData.temperature + " at time " + new Date(x) );
-			weatherData.temperature = 0;
-		}
-
-		if ( weatherData.humidity<0 || weatherData.humidity>100 )
-		{ 
-			console.warn("Invalid humidity: " + weatherData.humidity + " at time " + new Date(x) );
-			weatherData.humidity = 0;
-		}
-
-		if ( weatherData.pressure<900 || weatherData.pressure>1200 )
-		{ 
-			console.warn("Invalid pressure: " + weatherData.pressure + " at time " + new Date(x) );
-			weatherData.pressure = 0;
-		}
-
+		
 		graphData.push( 
 			{
 				x: x,
@@ -297,11 +280,39 @@ GraphDataFetcher._createUint8ArrayFromMessageString = function( messageString )
 
 GraphDataFetcher._getWeatherDataFromUint8Array = function( uint8Array )
 {
+	var weatherData = GraphDataFetcher._getWeatherDataVersion1FromUint8Array(uint8Array);
+	if ( weatherData.temperature<-50 || weatherData.temperature>50 || 
+		 weatherData.humidity<0 || weatherData.humidity>100 || 
+		 weatherData.pressure<900 || weatherData.pressure>1200 )
+	{
+		weatherData = GraphDataFetcher._getWeatherDataVersion2FromUint8Array(uint8Array);
+	}
+	return weatherData;
+};
+
+GraphDataFetcher._getWeatherDataVersion1FromUint8Array = function( uint8Array )
+{
 	var dataView = new DataView(uint8Array.buffer);
 	var weatherData = {
 		pressure: dataView.getUint32(0),		
 		temperature: dataView.getFloat32(4),
 		humidity: dataView.getUint32(8)
+	};
+	return weatherData;
+};
+
+GraphDataFetcher._getWeatherDataVersion2FromUint8Array = function( uint8Array )
+{
+	var dataView = new DataView(uint8Array.buffer);
+
+	var temperature = (dataView.getUint8(11) -64.0) / 4.0;
+	var humidity = dataView.getUint8(10) / 2.0;
+	var pressure = dataView.getUint8(9) + 815;
+
+	var weatherData = {
+		pressure: pressure,		
+		temperature: temperature,
+		humidity: humidity
 	};
 	return weatherData;
 };
