@@ -10,7 +10,7 @@ var sigfoxBackendAuth = null;
 
 function createHTMLErrorResponse( res, code, message )
 {
-	res.writeHead(code, {"Content-Type:": "text/html"});
+	res.writeHead(code, {"content-type": "text/html"});
 	res.write(
 		'<!DOCTYPE html>'+
 		'<html>'+
@@ -48,7 +48,7 @@ function forwardApiCall( path, query, res )
 			response.on('end', 
 				function() 
 				{
-					res.writeHead(200, {"Content-Type:": "application/json"});
+					res.writeHead(200, {"content-type": "application/json"});
 					res.write(str);
 					res.end();
 				});
@@ -66,9 +66,41 @@ function forwardApiCall( path, query, res )
 	req.end();
 }
 
+function getFilenameExtension( filename )
+{
+	var parts = filename.split('.');
+	if ( parts.length>1 )
+	{
+		return parts[parts.length-1];
+	}
+	return "";
+}
+
+function getFileContentType( filename )
+{
+	var contentType = null;
+	var extension = getFilenameExtension( filename ).toLowerCase();
+	switch ( extension )
+	{
+		case 'html': 
+			return 'text/html';
+		case 'js':
+			return 'application/javascript';
+	}
+	return null;
+}
+
 function serveFile( filename, res )
 {
-	console.log("Serving file: " + filename);
+	var contentType = getFileContentType(filename);
+	if ( !contentType )
+	{
+		console.warn("Serving file: " + filename + ". Unsupported file/content type");
+		res.end();
+		return;
+	}
+	console.log("Serving file: " + filename + " as " + contentType);
+
 	fs.readFile(filename, 'utf8', 
 		function(err, data) 
 			{
@@ -78,7 +110,7 @@ function serveFile( filename, res )
 		  		}
 		  		else
 		  		{
-		  			res.writeHead(200); //{"Content-Type:": "application/json"});	// The server should certainly provide content type based on file extension
+		  			res.writeHead( 200, {"content-type":contentType} );
 					res.write(data);
 					res.end();
 				}
